@@ -2,10 +2,7 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-
 const Router = require("./routes/index");
-
-
 var app = express();
 
 // view engine setup
@@ -56,9 +53,6 @@ const testTransactions = [
     },
 ];
 // Transaction.bulkCreate(testTransactions)
-
-
-
 
 
 

@@ -13,15 +13,17 @@ const Referral = sequelize.define('referal', {
     },
     referred_by: {
         type: DataTypes.INTEGER,
+        primaryKey: true,
         allowNull: false
     }
 });
 
 Referral.belongsTo(User, {
-    foreignKey: 'referal_userid'
+    foreignKey: 'referred_by'
 })
 User.hasMany(Referral, {
-    foreignKey: 'referal_userid'
+    foreignKey: 'referred_by'
 })
+
 // Referral.sync({ alter: true });
 module.exports = { Referral };

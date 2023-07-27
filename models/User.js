@@ -23,6 +23,7 @@ const User = sequelize.define('user', {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
+        allowNull: false
     },
     node_id: {
         type: DataTypes.INTEGER,

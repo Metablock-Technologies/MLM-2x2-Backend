@@ -2,11 +2,11 @@ const express = require('express');
 const userRouter = express.Router();
 
 const { User, Transaction } = require('../models/index');
-const { getUserTransaction, createUser } = require('../controller/userController');
+const { getUserTransaction, createReferralUser } = require('../controller/userController');
 
 
 /* GET users listing. */
 userRouter.get('/', getUserTransaction);
-userRouter.post('/', createUser);
+userRouter.post('/referral', createReferralUser);
 
 module.exports = userRouter;
