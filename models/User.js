@@ -53,7 +53,7 @@ const User = sequelize.define('user', {
     },
     number_of_referral: {
         type: DataTypes.INTEGER,
-        defaultValule: 0,
+        defaultValule: '0',
         allowNull: false
     },
     name: {
