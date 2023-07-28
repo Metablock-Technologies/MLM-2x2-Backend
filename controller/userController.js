@@ -1,7 +1,7 @@
 const { User, Transaction } = require('../models/index');
 // const { UserServices } = require("../services");
 const { userServices } = require("../services");
-
+const { walletServices } = require("../services");
 
 async function getUserTransaction(req, res, next) {
     // res.send('respond with a resource');
@@ -24,9 +24,9 @@ async function createReferralUser(req, res) {
     try {
         const { username, email, password, name, phonenumber, referred_by } = req.body;
         //refreed by or root, not root then use referral table to access referral_id to the refrral name 
-
+        if(!username || !email || !password || !name || !phonenumber || !referred_by) return res.status(400).json({ message: 'All fields are required', data: req.body });
         const rslt = await userServices.createReferralUser(username, email, password, name, phonenumber, referred_by);
-
+        await walletServices.addAmountToWallet(referred_by,9 );
         return res.status(201).json({ message: 'User created successfully', user: rslt });
     }
     catch (error) {
