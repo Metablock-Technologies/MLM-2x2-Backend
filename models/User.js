@@ -49,21 +49,22 @@ const User = sequelize.define('user', {
     number_of_renew: {
         type: DataTypes.INTEGER,
         defaultValule: 0,
-        allowNull: false
     },
     number_of_referral: {
         type: DataTypes.INTEGER,
         defaultValule: '0',
-        allowNull: false
     },
     name: {
         type: DataTypes.STRING,
-        allowNull: false
     },
     phonenumber: {
         type: DataTypes.INTEGER,
         allowNull: false,
         // unique: true
+    },
+    hashcode: {
+        type: DataTypes.STRING,
+        unique: true,
     }
 });
 

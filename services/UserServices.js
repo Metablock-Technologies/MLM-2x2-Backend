@@ -1,4 +1,4 @@
-const { User, Transaction, Referral } = require('../models/index');
+const { User, Transaction, Referral, Renewal } = require('../models/index');
 
 class UserServices {
     async createReferralUser(username, email, password, name, phonenumber, referred_by) {
@@ -60,8 +60,42 @@ class UserServices {
         }
     }
 
-    async renewalUser(username, email) {
+    async createRenewal(username, email) {
         try {
+            const existingUser = await User.findOne({ where: { username } });
+
+            let node_id = 1; // Default node_id if no users exist
+            // Find the last user to calculate the new node_id
+            const lastUser = await User.findOne({
+                order: [['id', 'DESC']], // Order by ID in descending order
+                attributes: ['node_id'],
+            });
+            if (lastUser) {
+                node_id = lastUser.node_id + 1;
+            }
+            const currentDate = new Date();
+            currentDate.setDate(currentDate.getDate() + 30);
+            const pack_expiry = currentDate.toISOString().split('T')[0]; // Convert to 'YYYY-MM-DD' format
+
+
+            const newUser = await User.create({
+                username,
+                email,
+                node_id,
+                pack_expiry,
+                status: 'active',
+                phonenumber: existingUser.phonenumber
+            })
+
+            await Renewal.create({
+                renewal_id: newUser.id,
+                main_id: existingUser.id
+            });
+            // Increase the number_of_renew for the renewal user
+            let fUser = await User.findByPk(main_id)
+            console.log(fUser);
+            fUser.number_of_renew += 1
+            fUser.save();
 
         }
         catch (err) {
