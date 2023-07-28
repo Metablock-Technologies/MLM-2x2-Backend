@@ -35,4 +35,19 @@ async function createReferralUser(req, res) {
     }
 }
 
-module.exports = { getUserTransaction, createReferralUser };
+async function createRenewal(req, res) {
+    try {
+        const { username, email, referred_by } = req.body;
+        //refreed by or root, not root then use referral table to access referral_id to the refrral name 
+
+        const rslt = await userServices.createReferralUser(username, email, referred_by);
+
+        return res.status(201).json({ message: 'User created successfully', user: rslt });
+    }
+    catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+module.exports = { getUserTransaction, createReferralUser, createRenewal };

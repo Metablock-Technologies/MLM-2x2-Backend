@@ -50,12 +50,22 @@ class UserServices {
                 // Increase the number_of_referral for the referrer user
                 let fUser = await User.findByPk(referred_by)
                 fUser.number_of_referral += 1
+                fUser.save();
                 // await User.increment('number_of_referral', { where: { id: referred_by } });
             }
         }
         catch (error) {
             console.error(error);
             throw error; // Rethrow the error to handle it in the calling function
+        }
+    }
+
+    async renewalUser(username, email) {
+        try {
+
+        }
+        catch (err) {
+            console.log(err);
         }
     }
 }
