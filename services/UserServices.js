@@ -1,6 +1,31 @@
 const { User, Transaction, Referral, Renewal } = require('../models/index');
+const crypto = require('crypto');
 
 class UserServices {
+    async generateUniqueHash() {
+        try {
+            while (true) {
+                // Generate a random 16-byte buffer
+                const randomBytes = crypto.randomBytes(16);
+                // Convert the random bytes to a hexadecimal string
+                const hash = randomBytes.toString('hex');
+                // Take the first 5 characters as the unique hash code
+                const uniqueHash = hash.substring(0, 5);
+
+                // Check if the generated uniqueHash already exists in the database
+                const existingUser = await User.findOne({ where: { hashcode: uniqueHash } });
+                if (!existingUser) {
+                    // If the hash code is not found in the database, return the unique hash
+                    return uniqueHash;
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+
     async createReferralUser(username, email, password, name, phonenumber, referred_by) {
         // Check if the user with the same email already exists, if it is then it will be a renew user
         try {
@@ -27,6 +52,9 @@ class UserServices {
             currentDate.setDate(currentDate.getDate() + 30);
             const pack_expiry = currentDate.toISOString().split('T')[0]; // Convert to 'YYYY-MM-DD' format
 
+            // Generate a 5-digit unique hash code for the user
+            const uniqueHash = await this.generateUniqueHash();
+
             // Create the new user in the database
             const newUser = await User.create({
                 username,
@@ -39,6 +67,7 @@ class UserServices {
                 pack_expiry,
                 number_of_renew: 0,
                 number_of_referral: 0,
+                hashcode: uniqueHash
             });
 
             // If the user is referred, update the referral information in the Referral table
@@ -60,9 +89,10 @@ class UserServices {
         }
     }
 
-    async createRenewal(username, email) {
+    async createRenewal(id) {
         try {
-            const existingUser = await User.findOne({ where: { username } });
+            const existingUser = await User.findOne({ where: { id } });
+            console.log("user", existingUser.username);
 
             let node_id = 1; // Default node_id if no users exist
             // Find the last user to calculate the new node_id
@@ -73,35 +103,42 @@ class UserServices {
             if (lastUser) {
                 node_id = lastUser.node_id + 1;
             }
-            const currentDate = new Date();
-            currentDate.setDate(currentDate.getDate() + 30);
-            const pack_expiry = currentDate.toISOString().split('T')[0]; // Convert to 'YYYY-MM-DD' format
 
+            // Calculate the new pack_expiry date (current pack_expiry + 30 days)
+            const currentDate = new Date(existingUser.pack_expiry);
+            console.log(currentDate);
+            currentDate.setDate(currentDate.getDate() + 30);
+            const newPackExpiry = currentDate.toISOString().split('T')[0]; // Convert to 'YYYY-MM-DD' format
+            console.log(newPackExpiry);
+
+            let newUsername = "renew" + "_" + newPackExpiry + "_" + existingUser.username;
+            let newEmail = "renew" + "+" + newPackExpiry + "+" + existingUser.email;
+            console.log(newUsername, newEmail);
 
             const newUser = await User.create({
-                username,
-                email,
+                username: newUsername,
+                email: newEmail,
+                password: existingUser.password,
                 node_id,
-                pack_expiry,
+                pack_expiry: newPackExpiry,
                 status: 'active',
-                phonenumber: existingUser.phonenumber
             })
 
             await Renewal.create({
                 renewal_id: newUser.id,
                 main_id: existingUser.id
             });
-            // Increase the number_of_renew for the renewal user
-            let fUser = await User.findByPk(main_id)
-            console.log(fUser);
-            fUser.number_of_renew += 1
-            fUser.save();
 
+            // Increase the number_of_renew for the main user
+            existingUser.number_of_renew += 1;
+            existingUser.pack_expiry = newPackExpiry;
+            await existingUser.save();
         }
         catch (err) {
             console.log(err);
         }
     }
+
 }
 
 module.exports = new UserServices();

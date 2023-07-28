@@ -59,8 +59,7 @@ const User = sequelize.define('user', {
     },
     phonenumber: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-        // unique: true
+        unique: true
     },
     hashcode: {
         type: DataTypes.STRING,
