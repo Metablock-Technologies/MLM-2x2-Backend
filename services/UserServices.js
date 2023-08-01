@@ -1,4 +1,10 @@
-const { User, Transaction, Referral, Renewal, Income_report } = require("../models/index");
+const {
+  User,
+  Transaction,
+  Referral,
+  Renewal,
+  Income_report,
+} = require("../models/index");
 const crypto = require("crypto");
 const { AMOUNT, REF } = require("../Constants");
 class UserServices {
@@ -55,8 +61,7 @@ class UserServices {
 
     // Generate a 5-digit unique hash code for the user
     const uniqueHash = await this.generateUniqueHash();
-    
-    
+
     // Create the new user in the database
     const newUser = await User.create({
       id: uid,
@@ -72,26 +77,23 @@ class UserServices {
       hashcode: uniqueHash,
     });
     const user_income_report = await Income_report.create({
+      userId: uid,
+      levelincome: 0.0,
+      amount_spent: AMOUNT,
+    });
 
-        userId:uid,
-        levelincome:0.0,
-        amount_spent:AMOUNT,
-
-    })
-
-  
     await Referral.create({
-        referredUserId: newUser.id,
-        referredByUserId: referred_by,
+      referredUserId: newUser.id,
+      referredByUserId: referred_by,
     });
     // Increase the number_of_referral for the referrer user
     let fUser = await User.findByPk(referred_by);
     fUser.number_of_referral += 1;
     await fUser.save();
-      // await User.increment('number_of_referral', { where: { id: referred_by } });
-   
+    // await User.increment('number_of_referral', { where: { id: referred_by } });
+
     // newUser = user_income_report
-    return {newUser,"income_report":user_income_report}
+    return { newUser, income_report: user_income_report };
   }
 
   async createRenewal(id) {
@@ -117,8 +119,9 @@ class UserServices {
       console.log(newPackExpiry);
 
       let newUsername =
-        "renew" + "_" + newPackExpiry + "_" + existingUser.username;
-      let newEmail = "renew" + "+" + newPackExpiry + "+" + existingUser.email;
+        "renew" + "_" + node_id + "_" + id + "_" + existingUser.username;
+      let newEmail =
+        "renew" + "+" + node_id + "+" + id + "+" + existingUser.email;
       console.log(newUsername, newEmail);
 
       const newUser = await User.create({
@@ -139,6 +142,10 @@ class UserServices {
       existingUser.number_of_renew += 1;
       existingUser.pack_expiry = newPackExpiry;
       await existingUser.save();
+
+      // await Income_report.create({
+      //   userId:
+      // })
     } catch (err) {
       console.log(err);
     }
