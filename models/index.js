@@ -6,6 +6,7 @@ const { Income_report } = require('./Incomereport');
 const { Autopool1 } = require('./Autopool1')
 const { Autopool2 } = require('./Autopool2')
 const { Transaction } = require('./Transaction')
+const { UserAuth } = require('./Userauth')
 
 module.exports = {
     User,
@@ -15,5 +16,6 @@ module.exports = {
     Income_report,
     Autopool1,
     Autopool2,
-    Transaction
+    Transaction,
+    UserAuth
 }
