@@ -1,9 +1,11 @@
 const { sequelize, DataTypes } = require('../config/db');
+const { Referral } = require('./Referal');
+const { Renewal } = require('./Renewal');
 const { User } = require('./User')
 // const sequelize = new Sequelize('sqlite::memory:');
 
 const Wallet = sequelize.define('wallet', {
-    wallet_id: {
+    id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         allowNull: false,
@@ -11,9 +13,9 @@ const Wallet = sequelize.define('wallet', {
     },
     wallet_link: {
         type: DataTypes.STRING,
-        allowNull: false,
+        // allowNull: false,
         unique: true,
-        allowNull: false,
+        // allowNull: false,
     },
     balance: {
         type: DataTypes.FLOAT,
@@ -32,12 +34,11 @@ const Wallet = sequelize.define('wallet', {
     }
 });
 
-Wallet.belongsTo(User, {
-    as: 'user_id'
-})
+Wallet.hasMany(User)
 
-User.hasOne(Wallet, {
-    as: 'user_id'
-})
+User.hasOne(Wallet)
 // Wallet.sync({ alter: true });
+// Renewal.sync({force:true})
+// Referral.sync({force:true})
+// User.sync({alt:true})
 module.exports = { Wallet };

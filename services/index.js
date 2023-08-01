@@ -1,4 +1,6 @@
 const userServices = require("./UserServices");
+const walletServices = require("./WalletServices");
+const transactionServices = require("./TransactionServices");
 // const authServices = require("./AuthServices");
 // const externalServices = require("./ExternalServices");
 // const eventServices = require("./EventServices");
@@ -14,6 +16,8 @@ module.exports = {
     //   eventServices,
     //   clubServices,
     userServices,
+    walletServices,
+    transactionServices,
     //   paymentServices,
     //   vendorServices,
     //   commonServices,

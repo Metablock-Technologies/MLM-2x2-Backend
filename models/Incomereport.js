@@ -5,8 +5,13 @@ const { Autopool1 } = require('./autopool1');
 // const sequelize = new Sequelize('sqlite::memory:');
 
 const Income_report = sequelize.define('income_report', {
+    id:{
+        type:DataTypes.INTEGER,
+        primaryKey:true,
+        autoIncrement:true,
+    },
     levelincome: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.FLOAT,
         allowNull: false,
     },
     amount_spent: {
@@ -36,12 +41,8 @@ const Income_report = sequelize.define('income_report', {
     },
 });
 
-Income_report.belongsTo(User, {
-    foreignKey: 'user_id'
-})
-User.hasOne(Income_report, {
-    foreignKey: 'user_id'
-})
+Income_report.belongsTo(User)
+User.hasOne(Income_report)
 
-// Income_report.sync({ alter: true });
+// Income_report.sync({ alter: true     });
 module.exports = { Income_report };

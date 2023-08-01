@@ -25,11 +25,11 @@ const User = sequelize.define('user', {
         autoIncrement: true,
         allowNull: false
     },
-    node_id: {
-        type: DataTypes.INTEGER,
-        unique: true,
-        allowNull: false
-    },
+    // node_id: {
+    //     type: DataTypes.INTEGER,
+    //     unique: true,
+    //     allowNull: false
+    // },
     status: {
         type: DataTypes.STRING,
         validate: {
@@ -58,7 +58,7 @@ const User = sequelize.define('user', {
         type: DataTypes.STRING,
     },
     phonenumber: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         unique: true
     },
     hashcode: {
