@@ -142,10 +142,26 @@ class UserServices {
       existingUser.number_of_renew += 1;
       existingUser.pack_expiry = newPackExpiry;
       await existingUser.save();
+      const allUserForMainId = await Renewal.findAll({
+        where:
+        {
+          main_id:id
+        }
+      })
 
-      // await Income_report.create({
-      //   userId:
-      // })
+      allUserForMainId.map(async (user)=>{
+        tempId = user.renewal_id
+        const renewUser = await User.findByPk(tempId);
+        renewUser.pack_expiry = newPackExpiry;
+        await renewUser.save()
+      })
+      const user_income_report = await Income_report.create({
+        userId:newUser.id ,
+        amount_spent:AMOUNT
+      })
+
+      return { newUser, income_report: user_income_report };
+
     } catch (err) {
       console.log(err);
     }

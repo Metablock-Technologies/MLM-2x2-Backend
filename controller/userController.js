@@ -85,8 +85,12 @@ async function createRenewal(req, res) {
   try {
     const { id } = req.body;
     //refreed by or root, not root then use referral table to access referral_id to the refrral name
-
+    //STEP 1------>> Create user and income report
     const rslt = await userServices.createRenewal(id);
+    
+    //STEP 4------>> Add levelincome
+    const levelincomeAmount = 0.6*AMOUNT
+    await walletServices.addLevelOrderIncome(rslt.newUser.id,levelincomeAmount);
 
     return res
       .status(201)
