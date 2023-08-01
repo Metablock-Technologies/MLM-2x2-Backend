@@ -6,6 +6,7 @@ const { getUserTransaction, createReferralUser, createRenewal, UserAuthenticatio
 
 /* GET users listing. */
 userRouter.get('/', getUserTransaction);
+console.log("here");
 userRouter.post('/referral', createReferralUser);
 userRouter.post('/renewal', createRenewal);
 userRouter.post('/signup', UserAuthentication);

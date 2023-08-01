@@ -1,4 +1,11 @@
-const { User, Wallet, Income_report, Renewal } = require("../models/index");
+const {
+  User,
+  Wallet,
+  Income_report,
+  Renewal,
+  Autopool1,
+  Autopool2,
+} = require("../models/index");
 const { AMOUNT } = require("../Constants");
 const { ApiBadRequestError } = require("../errors");
 // const {Wallet} = require('../models');
@@ -22,7 +29,7 @@ class WalletServices {
     return new_walltet;
   }
   async addAmountToWallet(userId, amount) {
-      console.log("Wallet add userId :", userId, " | amount : ",amount);
+    console.log("Wallet add userId :", userId, " | amount : ", amount);
     const isRenewedAccount = await Renewal.findOne({
       where: {
         renewal_id: userId,
@@ -53,12 +60,15 @@ class WalletServices {
     autopool2 = 0,
     referral = 0,
   } = {}) {
-    console.log( "updated income report: ",userId,
-    amount_spent ,
-    levelincome ,
-    autopool1 ,
-    autopool2,
-    referral ,)
+    console.log(
+      "updated income report: ",
+      userId,
+      amount_spent,
+      levelincome,
+      autopool1,
+      autopool2,
+      referral
+    );
     const userIncomeReport = await Income_report.findOne({
       where: {
         userId: userId,
@@ -66,14 +76,14 @@ class WalletServices {
     });
     const increase = levelincome + autopool1 + autopool2 + referral;
 
-    userIncomeReport.totalincome =  userIncomeReport.totalincome+increase;
-    userIncomeReport.referral =userIncomeReport.referral+ referral;
-    userIncomeReport.autopool1 =userIncomeReport.autopool1+ autopool1;
+    userIncomeReport.totalincome = userIncomeReport.totalincome + increase;
+    userIncomeReport.referral = userIncomeReport.referral + referral;
+    userIncomeReport.autopool1 = userIncomeReport.autopool1 + autopool1;
     userIncomeReport.autopool2 = userIncomeReport.autopool2 + autopool2;
-    userIncomeReport.autopool2 =userIncomeReport.autopool2 + amount_spent;
-    userIncomeReport.levelincome =userIncomeReport.levelincome + levelincome;
+    userIncomeReport.autopool2 = userIncomeReport.autopool2 + amount_spent;
+    userIncomeReport.levelincome = userIncomeReport.levelincome + levelincome;
     await userIncomeReport.save();
-    console.log("Updated income report: ",JSON.stringify(userIncomeReport))
+    console.log("Updated income report: ", JSON.stringify(userIncomeReport));
     return userIncomeReport;
   }
 
@@ -99,7 +109,7 @@ class WalletServices {
       } else if (count < 25) {
         percent = 0.01;
       }
-      console.log(amount*percent);
+      console.log(amount * percent);
       await this.addAmountToWallet(tempId, amount * percent);
       await this.updateIncomeReport({
         userId: tempId,
@@ -108,6 +118,73 @@ class WalletServices {
       tempId = parseInt(tempId / 2);
       count += 1;
     }
+  }
+
+  async addAmountToAutoPool1(amount) {
+    const latestAutopool = await Autopool1.findOne({
+      order: [["id", "DESC"]], // Order by ID in descending order
+    });
+    if (latestAutopool) {
+      const monthDate = latestAutopool.month;
+      const dateObject = new Date(monthDate); // Convert the monthDate to a JavaScript Date object
+      const latestAutoPoolMonth = dateObject.getMonth();
+      const today = new Date();
+
+      // Get the zero-indexed month (0 for January, 1 for February, etc.)
+      const currentMonth = today.getMonth();
+      if (currentMonth == latestAutoPoolMonth) {
+        latestAutopool.amount += amount;
+        await latestAutopool.save();
+        return;
+      }
+    }
+    const today = new Date();
+
+    // Extract the year, month, and day from the today Date object
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const day = today.getDate();
+  
+    // Create a new Date object with the extracted year, month, and day, effectively removing the time part
+    const currentDate = new Date(year, month, day);
+    const newAutoPool = Autopool1.create({
+      amount:amount,
+      month:currentDate,
+      status:'pending'
+    })
+  }
+  async addAmountToAutoPool2(amount) {
+    const latestAutopool = await Autopool2.findOne({
+      order: [["id", "DESC"]], // Order by ID in descending order
+    });
+    if (latestAutopool) {
+      const monthDate = latestAutopool.month;
+      const dateObject = new Date(monthDate); // Convert the monthDate to a JavaScript Date object
+      const latestAutoPoolMonth = dateObject.getMonth();
+      const today = new Date();
+
+      // Get the zero-indexed month (0 for January, 1 for February, etc.)
+      const currentMonth = today.getMonth();
+      if (currentMonth == latestAutoPoolMonth) {
+        latestAutopool.amount += amount;
+        await latestAutopool.save();
+        return;
+      }
+    }
+    const today = new Date();
+
+    // Extract the year, month, and day from the today Date object
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const day = today.getDate();
+  
+    // Create a new Date object with the extracted year, month, and day, effectively removing the time part
+    const currentDate = new Date(year, month, day);
+    const newAutoPool = Autopool2.create({
+      amount:amount,
+      month:currentDate,
+      status:'pending'
+    })
   }
 }
 module.exports = new WalletServices();
