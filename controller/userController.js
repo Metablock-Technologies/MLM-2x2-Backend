@@ -4,7 +4,7 @@ const { User, Transaction, Income_report } = require("../models/index");
 // const { UserServices } = require("../services");
 const { userServices } = require("../services");
 const { walletServices } = require("../services");
-
+var nodemailer = require("nodemailer");
 async function getUserTransaction(req, res, next) {
   try {
     const rslt = await User.findAll({
@@ -102,7 +102,7 @@ async function UserAuthentication(req, res, next) {
     );
     return res
       .status(201)
-      .json({ message: "User authentication successfull", user: rslt });
+      .json({ message: "User Sign Up Successfull. Please log in to contine.", user: rslt });
   } catch (err) {
     next(err);
   }
@@ -152,10 +152,56 @@ async function createRenewal(req, res, next) {
   }
 }
 
+async function registerEmail(req, res, next) {
+  try {
+    // var transporter = nodemailer.createTransport({
+    //     service: 'gmail',
+    //     auth: {
+    //       user: process.env.MAIL,
+    //       pass: process.env.PASS
+    //     }
+    //   });
+
+    //   var mailOptions = {
+    //     from: process.env.MAIL,
+    //     to: 'khushigarg.64901@gmail.com',
+    //     subject: 'Sending Email using Node.js',
+    //     text: 'That was easy!'
+    //   };
+
+    //   transporter.sendMail(mailOptions, function(error, info){
+    //     if (error) {
+    //       console.log(error);
+    //     } else {
+    //       console.log('Email sent: ' + info.response);
+    //     }
+    //   });
+    
+    const rslt = await userServices.createUserAuthentication
+    
+    res.status(200).json({ message: `OTP sent on mail ${req.body.email}` });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function verifyOTP(req, res, next) {
+  try {
+    if (!req.body.OTP) {
+      throw new ApiBadRequestError("You have not entered any OTP");
+    }
+    res.status(200).json({ status: "success", OTPisVerified: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getUserTransaction,
   createReferralUser,
   createRenewal,
   UserAuthentication,
   UserSignIn,
+  registerEmail,
+  verifyOTP,
 };
