@@ -143,7 +143,7 @@ async function createRenewal(req, res, next) {
 async function signUp (req,res,next){
   try{
 
-    let  {name,username,password,referral} = req.body
+    let  {name,username,password,referral,role} = req.body
     const uid = req.user.uid
     if(!name || !username || !password || !role){
       throw new ApiBadRequestError("Send all data")
