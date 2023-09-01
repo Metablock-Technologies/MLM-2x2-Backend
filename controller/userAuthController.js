@@ -1,8 +1,8 @@
 const asyncHandler = require("express-async-handler");
 const userAuthServices = require("../services/userAuthServices");
 const { Api404Error, ApiBadRequestError } = require("../errors");
-const { User, Admin } = require("../models");
-
+const { User, Admin, UserAuthentication } = require("../models");
+const bcrypt = require("bcrypt")
 exports.sendOTP = asyncHandler(async(req,res)=>{
     if(!req.body.phone){
         throw new ApiBadRequestError("There was no phone number provided in the body. Please provide a phone number");
@@ -68,34 +68,71 @@ exports.login = asyncHandler(async(req,res)=>{
 
 exports.changepassword = asyncHandler( async(req,res)=>{
     const {uid, role} = req.user
-    const {password} = req.body
+    let {password} = req.body
     if(!password){
         throw new ApiBadRequestError("pleas provide password in body")
     }
     if(role == "basic"){
         const salt = await bcrypt.genSaltSync(10);
         password = bcrypt.hashSync(password, salt);
-        const user = await User.findOne({
+        const user = await UserAuthentication.findOne({
             where:{
                 id:uid
             }
         })
         user.password = password;
         await user.save()
-        res.status(200).json({status:200,message:"Password updated. Please Login",data:rslt})
+        res.status(200).json({status:200,message:"Password updated. Please Login",data:user})
 
     }
     else if(role == "admin"){
         const salt = await bcrypt.genSaltSync(10);
         password = bcrypt.hashSync(password, salt);
-        const user = await Admin.findOne({
+        const user = await UserAuthentication.findOne({
             where:{
                 id:uid
             }
         })
         user.password = password;
         await user.save()
-        res.status(200).json({status:200,message:"Password updated. Please Login",data:rslt})
+        res.status(200).json({status:200,message:"Password updated. Please Login",data:user})
     }
     
+})
+
+exports.blockUser = asyncHandler( async(req,res)=>{
+    const status = req.body.status
+    const uid = req.body.userId
+    if(status != "true" && status != "false"){
+        throw new ApiBadRequestError("status should be true or false")
+    }
+    const rslt = await User.findOne({
+        where:{
+            id:uid
+        }
+    })
+    const expiryDate = new Date(rslt.pack_expiry);
+    const currentDate = new Date();
+
+// console.log(jsDate); 
+// console.log(currentDate); 
+//     console.log(rslt.pack_expiry , Date.now());
+    if(status == "true"){
+        rslt.status = "blocked"
+        await rslt.save()
+    }
+    else{
+        if(rslt.status == "blocked"){
+            if( expiryDate  < currentDate){
+                rslt.status = "inactive"
+                await rslt.save()
+            }
+            else {
+                rslt.status = "active"
+                await rslt.save()
+            }
+        }
+    }
+    // await rslt.save()
+    res.status(200).json({status:200,message:"User Blocked status updated.",data:rslt})
 })

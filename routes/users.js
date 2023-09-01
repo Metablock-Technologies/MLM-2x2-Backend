@@ -4,11 +4,11 @@ const userAuthController = require("../controller/userAuthController")
 const userController = require("../controller/userController")
 const { User, Transaction } = require('../models/index');
 const { getUserTransaction, createReferralUser, createRenewal, UserAuthentication } = require('../controller/userController');
-const { isVerifiedUser } = require('../middlewares/authMiddleware');
+const { isVerifiedUser,verifyRole } = require('../middlewares/authMiddleware');
 
 /* GET users listing. */
-userRouter.get('/', getUserTransaction);
-console.log("here");
+// userRouter.get('/', getUserTransaction);
+// console.log("here");
 userRouter.post('/referral',isVerifiedUser, createReferralUser);
 userRouter.post('/renewal',isVerifiedUser, createRenewal);
 userRouter.post("/otp",userAuthController.sendOTP)
@@ -20,6 +20,9 @@ userRouter.get("/myteam/:userId",isVerifiedUser,userController.getMyteam)
 userRouter.get("/myteam",isVerifiedUser,userController.getMyteam)
 userRouter.get("/profile/:userId",isVerifiedUser,userController.getUserProfile)
 userRouter.get("/profile/",isVerifiedUser,userController.getUserProfile)
+userRouter.put("/profile",isVerifiedUser,userController.updateName)
 userRouter.get("/myrenew",isVerifiedUser,userController.getMyRenew)
-
+userRouter.post("/changepassword",isVerifiedUser,userAuthController.changepassword)
+// userRouter.get("/withdraw",isVerifiedUser,userController.withdrawMoney)
+userRouter.post("/block",isVerifiedUser,verifyRole("admin"),userAuthController.blockUser)
 module.exports = userRouter;

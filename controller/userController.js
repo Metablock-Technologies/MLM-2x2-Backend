@@ -293,11 +293,32 @@ try{
 
 async function getMyRenew(req,res,next){
   try{
-
+    const uid = req.params.userId || req.user.uid
+    const rslt = await userServices.getMyRenew(uid)
+    res.status(200).json({message:"Renewed Users fetched successfully",data:rslt})
   }catch(err){
     next(err)
   }
 }
+async function updateName(req,res,next){
+  try{
+    const uid = req.user.uid
+    const name = req.body.name
+    const rslt = await User.findOne({
+      where:{
+        id:uid
+      }
+    })
+    rslt.name = name;
+    await rslt.save()
+
+    res.status(200).json({message:"Name Updated successfully",data:rslt})
+  }catch(err){
+    next(err)
+  }
+}
+
+
 
 module.exports = {
   getUserTransaction,
@@ -307,4 +328,6 @@ module.exports = {
   getUserProfile,
   getTransactions,
   getMyteam,
+  getMyRenew,
+  updateName,
 };

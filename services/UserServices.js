@@ -358,6 +358,18 @@ class UserServices {
     }
     return arr
   }
+  async getMyRenew(uid){
+    const rslt = await Renewal.findAll({
+      where:{
+        main_id:uid
+      }
+    })
+    // const data = [] 
+    // rslt.map((user)=>{
+    //   const userData = await User.
+    // })
+    return rslt
+  }
 
 
 }

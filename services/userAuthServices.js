@@ -204,9 +204,11 @@ class userAuthServices {
 
   //----------------
   async login(email, password) {
-    const user = await User.findOne({
+    const user = await UserAuthentication.findOne({
       where: {
         email,
+        is_phone_verified:true,
+        is_email_verified:true
       },
       
     });
