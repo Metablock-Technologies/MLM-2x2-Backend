@@ -1,6 +1,6 @@
 const { sequelize, DataTypes } = require('../config/db');
 const { User } = require('./User');
-const { Autopool1 } = require('./autopool1');
+
 
 // const sequelize = new Sequelize('sqlite::memory:');
 

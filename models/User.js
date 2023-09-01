@@ -1,3 +1,4 @@
+const { UserDataType } = require('../Constants');
 const { sequelize, DataTypes } = require('../config/db');
 
 // const sequelize = new Sequelize('sqlite::memory:');
@@ -33,7 +34,7 @@ const User = sequelize.define('user', {
     status: {
         type: DataTypes.STRING,
         validate: {
-            isIn: [['active', 'inactive']]
+            isIn: [['active', 'inactive','blocked']]
         },
         allowNull: false
     },
@@ -64,7 +65,21 @@ const User = sequelize.define('user', {
     hashcode: {
         type: DataTypes.STRING,
         unique: true,
-    }
+    },
+    role: {
+        type: DataTypes.ENUM(Object.values(UserDataType)),
+        allowNull: false,
+        validate: {
+          isIn: {
+            args: [Object.values(UserDataType)],
+            msg: `Only Allowed Values Are: ${Object.values(UserDataType)} `,
+          },
+        },
+      },
+      type:{
+        type:DataTypes.ENUM,
+        values:["main","renewed"]
+      }
 });
 
 

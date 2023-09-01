@@ -14,6 +14,10 @@ const Transaction = sequelize.define('transaction', {
     detail: {
         type: DataTypes.STRING,
         allowNull: false,
+    },
+    amount:{
+        type:DataTypes.DOUBLE,
+        defaultValue:0
     }
 });
 

@@ -5,6 +5,7 @@ const {
   Renewal,
   Autopool1,
   Autopool2,
+  Transaction,
 } = require("../models/index");
 const { AMOUNT } = require("../Constants");
 const { ApiBadRequestError } = require("../errors");
@@ -78,9 +79,37 @@ class WalletServices {
 
     userIncomeReport.totalincome = userIncomeReport.totalincome + increase;
     userIncomeReport.referral = userIncomeReport.referral + referral;
+    if(parseFloat(referral) > 0){
+      await Transaction.create({
+        userId,
+        detail:"Referral Income",
+        amount:referral
+      })
+    }
     userIncomeReport.autopool1 = userIncomeReport.autopool1 + autopool1;
+    if(parseFloat(autopool1) > 0){
+      await Transaction.create({
+        userId,
+        detail:"Autopool1 Income",
+        amount:autopool1
+      })
+    }
     userIncomeReport.autopool2 = userIncomeReport.autopool2 + autopool2;
-    userIncomeReport.autopool2 = userIncomeReport.autopool2 + amount_spent;
+    if(parseFloat(autopool2) > 0){
+      await Transaction.create({
+        userId,
+        detail:"Autopool2 Income",
+        amount:autopool2
+      })
+    }
+    userIncomeReport.amount_spent = userIncomeReport.amount_spent + amount_spent;
+    if(parseFloat(amount_spent) > 0){
+      await Transaction.create({
+        userId,
+        detail:"Spent Amount",
+        amount:amount_spent
+      })
+    }
     userIncomeReport.levelincome = userIncomeReport.levelincome + levelincome;
     await userIncomeReport.save();
     console.log("Updated income report: ", JSON.stringify(userIncomeReport));
@@ -88,6 +117,7 @@ class WalletServices {
   }
 
   async addLevelOrderIncome(startUserId, amount) {
+
     let tempId = startUserId;
     let count = 1;
     let percent = 0;
@@ -115,6 +145,11 @@ class WalletServices {
         userId: tempId,
         levelincome: amount * percent,
       });
+      await Transaction.create({
+        userId:tempId,
+        detail:"Level Income",
+        amount:amount*percent
+      })
       tempId = parseInt(tempId / 2);
       count += 1;
     }

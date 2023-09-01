@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, op } = require('sequelize');
+const { Sequelize, DataTypes, Op } = require('sequelize');
 require('dotenv').config();
 
 const sequelize = new Sequelize(
@@ -28,4 +28,4 @@ async function checkDatabaseConnection() {
 checkDatabaseConnection();
 
 
-module.exports = { sequelize, DataTypes };
+module.exports = { sequelize, DataTypes,Op };
