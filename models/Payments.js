@@ -8,16 +8,22 @@ const Payment = sequelize.define("payment",{
         primaryKey:true,
         autoIncrement:true
     },
-    paymentCode:{
+    order_id:{
         type:DataTypes.STRING
     },
     type:{
         type:DataTypes.ENUM,
         values:["referral","renewal"]
     },
-    isUser:{
-        type:DataTypes.BOOLEAN,
-        defaultValue:false
+
+    status:{
+        type:DataTypes.STRING
+    },
+    payment_id:{
+        type:DataTypes.STRING
+    },
+    purchase_id:{
+        type:DataTypes.STRING
     }
 })
 

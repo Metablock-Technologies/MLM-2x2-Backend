@@ -8,11 +8,13 @@ router.get("/health-check", (req, res) => {
         "API response? You got it! No need to keep refreshing, it's all good. 10/10, would serve again."
       );
   });
+  const paymentRouter = require("./payment")
 const userRouter = require("./users");
 const adminRouter = require("./admin");
 const { isVerifiedUser, verifyRole } = require("../middlewares/authMiddleware");
 router.use("/user", userRouter);
 router.use("/admin",isVerifiedUser,verifyRole("admin"), adminRouter);
+router.use("/payment", paymentRouter);
 
 
 module.exports = router;

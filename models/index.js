@@ -10,6 +10,7 @@ const { Transaction } = require("./Transaction");
 const { UserAuthentication } = require("./UserAuthentication");
 const { Payment } = require("./Payments");
 const { LogWebhook } = require("./LogWebhook");
+const { PaymentCallBackLog } = require("./PaymentCallBackLog");
 
 
 module.exports = {
@@ -24,4 +25,5 @@ module.exports = {
   Payment,
 LogWebhook,
   UserAuthentication,
+  PaymentCallBackLog,
 };
