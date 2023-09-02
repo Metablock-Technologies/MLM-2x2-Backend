@@ -286,6 +286,8 @@ class UserServices {
 
     let newUsername =
       "renew" + "_" + node_id + "_" + id + "_" + existingUser.username;
+    let name =
+      "renew" + "_" + node_id + "_" + id + "_" + existingUser.name;
     let newEmail =
       "renew" + "+" + node_id + "+" + id + "+" + existingUser.email;
     console.log(newUsername, newEmail);
@@ -293,11 +295,14 @@ class UserServices {
     const newUser = await User.create({
       username: newUsername,
       email: newEmail,
+      name,
+      // phonenumber:existingUser.phonenumber,
       password: existingUser.password,
       id: node_id,
       pack_expiry: newPackExpiry,
       status: "active",
-      type:"renewed"
+      type:"renewed",
+      role:"basic"
     });
 
     await Renewal.create({

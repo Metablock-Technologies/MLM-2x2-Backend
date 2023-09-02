@@ -7,15 +7,14 @@ const Renewal = sequelize.define('renewal', {
     renewal_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
+       
         unique: true,
         // field:'referral_user_id' // to match the column name in db table
     },
     main_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        primaryKey: true
+      
     }
 });
 
@@ -25,5 +24,5 @@ Renewal.belongsTo(User, {
 User.hasMany(Renewal, {
     foreignKey: 'main_id'
 })
-// Renewal.sync({ alter: true });
+// Renewal.sync({ force: true });
 module.exports = { Renewal };

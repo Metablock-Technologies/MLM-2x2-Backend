@@ -113,7 +113,7 @@ async function createReferralUser(req, res, next) {
 
 async function createRenewal(req, res, next) {
   try {
-    const { id } = req.body;
+    const  id  = req.user.uid;
     if (!id) {
       throw new ApiBadRequestError("id not found");
     }
