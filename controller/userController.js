@@ -340,8 +340,9 @@ async function initialpayment(req, res, next) {
           type: "referral",
         },
       });
+      let orderId = payment ? payment.paymentCode : "reff-" + id;
+      const paymentResponse1 =  payment?(await axios.get(`https://api.nowpayments.io/v1/payment/${payment.payment_id}`, { headers })).data:1==1;
       if (!payment) {
-        let orderId = payment ? payment.paymentCode : "reff-" + id;
         const createPaymentBody = {
           price_amount: 25,
           price_currency: "usd",
@@ -364,12 +365,13 @@ async function initialpayment(req, res, next) {
           type:"referral",
           status:paymentResponse.payment_status,
           payment_id:paymentResponse.payment_id,
-          purchase_id:paymentResponse.purchase_id
+          purchase_id:paymentResponse.purchase_id,
+          userId:id
         }) 
         res.status(200).json({ message: "Payment Created Successfully", data: paymentResponse });
       }
       else {
-        if(payment.status == "partially_paid" ){
+        if(paymentResponse1.payment_status == "partially_paid" ){
           const createPaymentBody = {
             purchase_id:payment.purchase_id
           };
@@ -380,10 +382,12 @@ async function initialpayment(req, res, next) {
           payment.payment_id=paymentResponse.payment_id,
           payment.purchase_id=paymentResponse.purchase_id
           await payment.save()
+        console.log("paymentResponse",paymentResponse);
+
           res.status(200).json({ message: "Payment Created Successfully", data: paymentResponse });
 
         }
-        else if(payment.status == "failed" || payment.status == "expired"){
+        else if(paymentResponse1.payment_status == "failed" || paymentResponse1.payment_status == "expired"){
           let orderId = payment ? payment.paymentCode : "reff-" + id;
           const createPaymentBody = {
             price_amount: 25,
@@ -407,6 +411,8 @@ async function initialpayment(req, res, next) {
           payment.payment_id=paymentResponse.payment_id,
           payment.purchase_id=paymentResponse.purchase_id
           await payment.save()
+        console.log("paymentResponse",paymentResponse);
+
           res.status(200).json({ message: "Payment Created Successfully", data: paymentResponse });
         }
         else{
