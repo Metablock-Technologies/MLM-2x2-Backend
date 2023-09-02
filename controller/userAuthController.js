@@ -55,6 +55,38 @@ exports.verifyOTP = asyncHandler(async(req,res)=>{
         }
         res.status(200).json({status:200,message:"OTP verified successfully",data:{user:rslt}})
 })
+exports.sendForgetOTP = asyncHandler(async(req,res)=>{
+    
+    if(!req.body.role){
+        throw new ApiBadRequestError("There was no role provided in the body. Please provide a role (basic/admin)");
+    }
+    
+        if(!req.body.email){
+            throw new ApiBadRequestError("Please send a email in the body of the request.")
+        }
+        let rslt = await userAuthServices.sendForgetEmailOTP(req.body.email,req.body.role);
+        res.status(200).json({
+            data:rslt
+        })
+    
+ 
+
+})
+
+exports.verifyForgetOTP = asyncHandler(async(req,res)=>{
+
+    let rslt;
+        if(!req.body.OTP ||  !req.body.email){
+            throw new ApiBadRequestError("OTP or email not provided in request body.")
+        }
+         rslt = await userAuthServices.verifyForgetEmailOTP(req.body.email, req.body.OTP,req.body.role)
+         console.log(rslt);
+         const tokenpayload = {uid:rslt.id,role:rslt.role}
+         const token = await userAuthServices.getAccessToken(tokenpayload)
+         res.status(200).json({status:200,message:"OTP verified successfully",data:{accessToken:token,user:rslt}})
+        
+ 
+})
 
 exports.login = asyncHandler(async(req,res)=>{
     const {email,password} = req.body

@@ -319,29 +319,31 @@ async function updateName(req,res,next){
   }
 }
 
-async function initialpayment(req,res){
+async function initialpayment(req,res,next){
   try{
 
-    // const id = req.user.uid
-    // const response = await axios.get(`${api_host}/v1/status`)
-    //   if(await response.status == 200){
-    //     const body = {
-    //       email: "okdreamok25@gmail.com",
-    //       password: "Rks12345" 
-    //   }
-    //   const token = (await axios.post(`${api_host}/v1/status`,body)).data.token
-    //   console.log(token);
-    // }
-    // else{
-    //   throw new ApiInternalServerError("Some error has occurred try again later.")
-    // }
+    const id = req.user.uid
+    const response = await axios.get(`${api_host}/v1/status`)
+      if(await response.status == 200){
+        const body = {
+          email: "okdreamok25@gmail.com",
+          password: "Rks12345" 
+      }
+      const token = (await axios.post(`${api_host}/v1/auth`,body)).data.token
+      console.log(token);
+    }
+    else{
+      throw new ApiInternalServerError("Some error has occurred try again later.")
+    }
     const rslt = {
       url:"https://nowpayments.io/"
     }
     res.status(200).json({message:"Name Updated successfully",data:rslt})
   }
   catch(err){
-    next(err)
+    console.log(err)
+    // next(err)
+    res.status(400).json(err)
   }
   
 }

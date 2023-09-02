@@ -13,6 +13,9 @@ userRouter.post('/referral',isVerifiedUser, createReferralUser);
 userRouter.post('/renewal',isVerifiedUser, createRenewal);
 userRouter.post("/otp",userAuthController.sendOTP)
 userRouter.post("/verify",userAuthController.verifyOTP)
+
+userRouter.post("/otpemail",userAuthController.sendForgetOTP) //for forgot password
+userRouter.post("/verifyemail",userAuthController.verifyForgetOTP) // for forgot password
 userRouter.post("/login",userAuthController.login)
 userRouter.get("/transactions",isVerifiedUser,userController.getTransactions)
 userRouter.post('/signup', isVerifiedUser,userController.signUp);
