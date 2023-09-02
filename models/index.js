@@ -9,6 +9,7 @@ const { Transaction } = require("./Transaction");
 
 const { UserAuthentication } = require("./UserAuthentication");
 const { Payment } = require("./Payments");
+const { LogWebhook } = require("./LogWebhook");
 
 
 module.exports = {
@@ -21,6 +22,6 @@ module.exports = {
   Autopool2,
   Transaction,
   Payment,
-
+LogWebhook,
   UserAuthentication,
 };

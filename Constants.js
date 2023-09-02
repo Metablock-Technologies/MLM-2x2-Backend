@@ -5,7 +5,7 @@ const UserDataType = {
   BASIC: "basic",
   ADMIN: "admin",
 };
-
+const api_host = "https://api.nowpayments.io"
 const challengeCategories = {
   POPULAR: "popular",
   QUICK: "quick",
@@ -31,5 +31,6 @@ module.exports = {
   penalties,
   AMOUNT,
   REF,
+  api_host,
   // commission
 };

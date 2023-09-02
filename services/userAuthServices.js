@@ -80,7 +80,7 @@ class userAuthServices {
     // console.log(checkuser,created);
     if (!created) {
       if (checkuser.isCreated) {
-        throw new ApiBadRequestError("Phone already in use");
+        throw new ApiBadRequestError("Phone already in use. Please Login");
       }
       checkuser.phone_otp = otp;
       checkuser.role = role;

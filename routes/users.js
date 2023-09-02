@@ -23,6 +23,7 @@ userRouter.get("/profile/",isVerifiedUser,userController.getUserProfile)
 userRouter.put("/profile",isVerifiedUser,userController.updateName)
 userRouter.get("/myrenew",isVerifiedUser,userController.getMyRenew)
 userRouter.post("/changepassword",isVerifiedUser,userAuthController.changepassword)
-// userRouter.get("/withdraw",isVerifiedUser,userController.withdrawMoney)
+userRouter.post("/initialpayment",isVerifiedUser,userController.initialpayment)
+userRouter.post("/withdraw",isVerifiedUser,userController.withdrawMoney)
 userRouter.post("/block",isVerifiedUser,verifyRole("admin"),userAuthController.blockUser)
 module.exports = userRouter;

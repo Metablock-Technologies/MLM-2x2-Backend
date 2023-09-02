@@ -1,6 +1,6 @@
-const { AMOUNT } = require("../Constants");
-const { ApiBadRequestError, Api404Error } = require("../errors");
-const { User, Transaction, Income_report, UserAuthentication, Wallet, Referral } = require("../models/index");
+const { AMOUNT, api_host } = require("../Constants");
+const { ApiBadRequestError, Api404Error, ApiInternalServerError } = require("../errors");
+const { User, Transaction, Income_report, UserAuthentication, Wallet, Referral, Renewal } = require("../models/index");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
 // const { UserServices } = require("../services");
@@ -8,6 +8,7 @@ const { userServices } = require("../services");
 const { walletServices } = require("../services");
 var nodemailer = require("nodemailer");
 const { Op } = require("sequelize");
+const { default: axios } = require("axios");
 async function getUserTransaction(req, res, next) {
   try {
     const rslt = await User.findAll({
@@ -318,6 +319,86 @@ async function updateName(req,res,next){
   }
 }
 
+async function initialpayment(req,res){
+  try{
+
+    // const id = req.user.uid
+    // const response = await axios.get(`${api_host}/v1/status`)
+    //   if(await response.status == 200){
+    //     const body = {
+    //       email: "okdreamok25@gmail.com",
+    //       password: "Rks12345" 
+    //   }
+    //   const token = (await axios.post(`${api_host}/v1/status`,body)).data.token
+    //   console.log(token);
+    // }
+    // else{
+    //   throw new ApiInternalServerError("Some error has occurred try again later.")
+    // }
+    const rslt = {
+      url:"https://nowpayments.io/"
+    }
+    res.status(200).json({message:"Name Updated successfully",data:rslt})
+  }
+  catch(err){
+    next(err)
+  }
+  
+}
+async function withdrawMoney(req,res,next){
+  try{
+    const uid = req.user.uid
+    const amount = req.body.amount
+    const address  = req.body.address
+    const numberOfrenew = await Renewal.findAndCountAll({
+      where:{
+        main_id:uid
+      }
+    })
+
+     
+
+    const wallet = await Wallet.findOne({
+      where:{
+        userId:uid
+      }
+    })
+
+    if(amount > wallet.balance){
+      throw new ApiBadRequestError("Insufficient Funds")
+    }
+
+    if(amount < 5){
+      throw new ApiBadRequestError("Minimum withdraw amount is 5")
+    }
+    if(numberOfrenew.count == 0 && parseFloat( wallet.withdraw_amount) + parseFloat(amount) > 100){
+      throw new ApiBadRequestError("You can only withdraw upto 100 with 0 renew id.")
+    }
+    if(numberOfrenew.count == 1 &&  parseFloat( wallet.withdraw_amount) + parseFloat(amount) > 200){
+      throw new ApiBadRequestError("You can only withdraw upto 200 with 1 renew id.")
+    }
+    if(numberOfrenew.count == 2 &&  parseFloat( wallet.withdraw_amount) + parseFloat(amount) > 400){
+      throw new ApiBadRequestError("You can only withdraw upto 200 with 1 renew id.")
+    }
+    wallet.withdraw_amount =  parseFloat( wallet.withdraw_amount) + parseFloat(amount);
+    wallet.balance =  parseFloat( wallet.balance) - parseFloat(amount)
+    //TODO add send USDTBSC via API
+    await wallet.save()
+
+  
+      await Transaction.create({
+        userId:uid,
+        detail:"Withdrawal",
+        amount:amount
+      })
+    
+    res.status(200).json({message:"Funds have been withdrawn successfully"})
+
+  }
+  catch(err){
+    next(err)
+  }
+}
 
 
 module.exports = {
@@ -330,4 +411,6 @@ module.exports = {
   getMyteam,
   getMyRenew,
   updateName,
+  withdrawMoney,
+  initialpayment,
 };
