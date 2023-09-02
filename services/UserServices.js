@@ -357,7 +357,7 @@ class UserServices {
         arrprocess.push(y1)
       }
       if( usery2){
-        arr.push(y1)
+        arr.push(y2)
         arrprocess.push(y2)
       }
     }

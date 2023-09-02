@@ -1,6 +1,6 @@
 const { AMOUNT, api_host } = require("../Constants");
 const { ApiBadRequestError, Api404Error, ApiInternalServerError } = require("../errors");
-const { User, Transaction, Income_report, UserAuthentication, Wallet, Referral, Renewal } = require("../models/index");
+const { User, Transaction, Income_report, UserAuthentication, Wallet, Referral, Renewal, Payment } = require("../models/index");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
 // const { UserServices } = require("../services");
@@ -331,6 +331,12 @@ async function initialpayment(req,res,next){
       }
       const token = (await axios.post(`${api_host}/v1/auth`,body)).data.token
       console.log(token);
+
+      const payment = await Payment.findOne({
+        where:{
+          userId:id
+        }
+      })
     }
     else{
       throw new ApiInternalServerError("Some error has occurred try again later.")
