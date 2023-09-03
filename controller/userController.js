@@ -340,7 +340,7 @@ async function initialpayment(req, res, next) {
           type: "referral",
         },
       });
-      let orderId = payment ? payment.paymentCode : "reff-" + id;
+      let orderId = payment ? payment.order_id : "reff-" + id;
       const paymentResponse1 =  payment?(await axios.get(`https://api.nowpayments.io/v1/payment/${payment.payment_id}`, { headers })).data:1==1;
       if (!payment) {
         const createPaymentBody = {

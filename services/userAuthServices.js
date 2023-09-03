@@ -5,6 +5,7 @@ const { generateRandomNumber } = require("../utils");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { sendEmail } = require("./mail");
+const unirest = require("unirest");
 class userAuthServices {
   async sendEmailOTP(email, phone, role) {
     let otp = generateRandomNumber(1000, 9999);
@@ -60,14 +61,14 @@ class userAuthServices {
   }
 
   //--------------------------------
-//forget password
-  
+  //forget password
+
   async sendForgetEmailOTP(email, role) {
     let otp = generateRandomNumber(1000, 9999);
     const existingUser = await UserAuthentication.findOne({
       where: {
         email,
-        isCreated:true
+        isCreated: true,
       },
     });
     if (!existingUser) {
@@ -97,7 +98,7 @@ class userAuthServices {
     existingUser.email_expirationTime = expirationTime;
     existingUser.email = email;
     await existingUser.save();
-    process.env.NODE_ENV == "production"
+    process.env.NODE_ENV == "production" || true
       ? await sendEmail(
           email,
           "OTP for Email Verification",
@@ -143,11 +144,16 @@ class userAuthServices {
       checkuser.phone_expirationTime = expirationTime;
       await checkuser.save();
     }
+    const otpStatus = await this.sendOTP(phone, otp);
 
-    return {
-      message: "OTP send on your phone number " + phone,
-      user: checkuser,
-    };
+    // const otpStatus = true;
+    logger.info(`SMS OTP is : ${otp}`);
+    if (otpStatus) {
+      return {
+        message: "OTP send on your phone number " + phone,
+        // user: checkuser,
+      };
+    }
   }
 
   //--------------------------------
@@ -204,13 +210,13 @@ class userAuthServices {
   }
   //--------------------
   //forgetpassword
-  async verifyForgetEmailOTP( email, OTP, role) {
+  async verifyForgetEmailOTP(email, OTP, role) {
     console.log("here");
     const checkUser = await UserAuthentication.findOne({
       where: {
         email,
         role,
-        isCreated:true
+        isCreated: true,
       },
     });
     if (!checkUser) {
@@ -290,10 +296,9 @@ class userAuthServices {
     const user = await UserAuthentication.findOne({
       where: {
         email,
-        is_phone_verified:true,
-        is_email_verified:true
+        is_phone_verified: true,
+        is_email_verified: true,
       },
-      
     });
     if (!user) {
       throw new ApiUnathorizedError(
@@ -305,8 +310,8 @@ class userAuthServices {
     // logger.debug(password,user.password)
     const verified = await bcrypt.compare(password, user.password);
     if (verified) {
-      if(user.status == "blocked"){
-        throw new ApiUnathorizedError("You are blocked from the platform.")
+      if (user.status == "blocked") {
+        throw new ApiUnathorizedError("You are blocked from the platform.");
       }
       const userWithoutPassword = { ...user.toJSON() };
       delete userWithoutPassword.password;
@@ -319,6 +324,86 @@ class userAuthServices {
         "Given email/password combination is invalid"
       );
     }
+  }
+
+  // UTILS - DO NOT MESS
+  async sendOTP(mobileNo, OTP) {
+    return this.fasttosms(mobileNo, OTP);
+    // return true;
+  }
+
+  // async sendEmail(to, subject, message, from) {
+  //   const params = {
+  //     Destination: {
+  //       ToAddresses: [to],
+  //     },
+  //     Message: {
+  //       Body: {
+  //         Html: {
+  //           Charset: "UTF-8",
+  //           Data: message,
+  //         },
+  //       },
+  //       Subject: {
+  //         Charset: "UTF-8",
+  //         Data: subject,
+  //       },
+  //     },
+  //     ReturnPath: from ? from : config.aws.ses.from.default,
+  //     Source: from ? from : config.aws.ses.from.default,
+  //   };
+
+  //   let data = await SES.sendEmail(params, (err, data) => {
+  //     if (err) {
+  //       throw err;
+  //     } else {
+  //       return data;
+  //     }
+  //   });
+  //   return data;
+  // }
+
+  async snsMessage(mobileNo, OTP) {
+    var params = {
+      Message:
+        "Welcome to PartyPal ! your mobile verification code is: " +
+        OTP +
+        "     Mobile Number is:" +
+        mobileNo /* required */,
+      PhoneNumber: mobileNo,
+    };
+
+    let data = await SNS.publish(params)
+      .promise()
+      .then((data) => {
+        return data;
+      })
+      .catch((err) => {
+        throw err;
+      });
+    return data;
+  }
+
+  async fasttosms(mobileNo, OTP) {
+    var req = unirest("POST", "https://www.fast2sms.com/dev/bulkV2");
+    console.log(mobileNo, OTP);
+    req.headers({
+      authorization: process.env.FAST_SMS,
+    });
+
+    req.form({
+      variables_values: `${OTP}`,
+      route: "otp",
+      numbers: `${String(mobileNo).substring(2)}`,
+    });
+
+    req.end(function (res) {
+      // console.log(res);]
+      console.log(req);
+      console.log(res.body);
+      if (res.error) throw new Error(res.error);
+    });
+    return true;
   }
 }
 module.exports = new userAuthServices();
