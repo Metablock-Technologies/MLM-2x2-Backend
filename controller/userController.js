@@ -184,17 +184,17 @@ async function getUserProfile(req, res, next) {
     const uid = req.params.userId || req.user.uid;
     console.log("uid", uid);
 
-    const userAuth = await UserAuthentication.findOne({
-      where: {
-        id: uid,
-      },
-    });
-    if (!userAuth) {
-      throw Api404Error("No user Found");
-    }
+    // const userAuth = await UserAuthentication.findOne({
+    //   where: {
+    //     id: uid,
+    //   },
+    // });
+    // if (!userAuth) {
+    //   throw Api404Error("No user Found");
+    // }
     const user = await User.findOne({
       where: {
-        phonenumber: userAuth.phone,
+        id: uid,
       },
       attributes: {
         exclude: ["password"],
@@ -208,6 +208,7 @@ async function getUserProfile(req, res, next) {
         },
       ],
     });
+    console.log("ajsdklajfsdkljfaklsdklfajsdl",user);
     let metadata = {};
     const referraluser = await Referral.findOne({
       where: {

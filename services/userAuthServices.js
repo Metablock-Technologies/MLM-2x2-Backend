@@ -42,7 +42,7 @@ class userAuthServices {
     existingUser.email_expirationTime = expirationTime;
     existingUser.email = email;
     await existingUser.save();
-    process.env.NODE_ENV == "production"
+    (process.env.NODE_ENV == "production" || true)
       ? await sendEmail(
           email,
           "OTP for Email Verification",
@@ -98,16 +98,16 @@ class userAuthServices {
     existingUser.email_expirationTime = expirationTime;
     existingUser.email = email;
     await existingUser.save();
-    process.env.NODE_ENV == "production" || true
+    (process.env.NODE_ENV == "production" || true)
       ? await sendEmail(
           email,
           "OTP for Email Verification",
           `<div class="container">
-      <h1>Ludo Onboarding</h1>
+      <h1>OkDream25 Onboarding</h1>
       <p>Hi,</p>
-      <p>Thank you for signing up on Fantasy Ludo! We're excited to have you on board and will be happy to help you set everything up.</p>
+      <p>Thank you for signing up on OkDream25! We're excited to have you on board and will be happy to help you set everything up.</p>
       <div class="otp">${otp}</div>
-      <p>The Ludo Team</p>
+      <p>The OkDream25 Team</p>
       <p class="footer">If you didn't create this account or have authentication-related issues, please let us know by replying to this email.</p>
     </div>`
         )
@@ -174,7 +174,8 @@ class userAuthServices {
     ) {
       throw new ApiBadRequestError("OTP has Expired");
     }
-    if (checkUser.phone_otp == OTP || process.env.NODE_ENV == "development") {
+    // if (checkUser.phone_otp == OTP || process.env.NODE_ENV == "development") {
+    if (checkUser.phone_otp == OTP ) {
       checkUser.is_phone_verified = true;
       await checkUser.save();
     }
@@ -202,7 +203,9 @@ class userAuthServices {
     ) {
       throw new ApiBadRequestError("OTP has Expired");
     }
-    if (checkUser.email_otp == OTP || true) {
+    console.log("OTP",String(checkUser.email_otp),String(OTP));
+    // if (checkUser.email_otp == OTP || true) {
+    if (String(checkUser.email_otp) == String(OTP) ) {
       checkUser.is_email_verified = true;
       await checkUser.save();
     }
@@ -229,7 +232,8 @@ class userAuthServices {
     ) {
       throw new ApiBadRequestError("OTP has Expired");
     }
-    if (checkUser.email_otp == OTP || true) {
+    // if (checkUser.email_otp == OTP || true) {
+    if (checkUser.email_otp == OTP ) {
       checkUser.is_email_verified = true;
       await checkUser.save();
     }
