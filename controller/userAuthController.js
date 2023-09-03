@@ -42,18 +42,24 @@ exports.verifyOTP = asyncHandler(async(req,res)=>{
             throw new ApiBadRequestError("OTP or phone not provided in body.")
         }
          rslt = await userAuthServices.verifyPhoneOTP(req.body.phone, req.body.OTP,req.body.role)
+         res.status(200).json({status:200,message:"OTP verified successfully",data:{user:rslt}})
     }
     else if(req.query.mode == "email"){
         if(!req.body.OTP || !req.body.phone || !req.body.email){
             throw new ApiBadRequestError("OTP or phone or email not provided in request body.")
         }
          rslt = await userAuthServices.verifyEmailOTP(req.body.phone,req.body.email, req.body.OTP,req.body.role)
-         console.log(rslt);
-         const tokenpayload = {uid:rslt.id,role:rslt.role}
-         const token = await userAuthServices.getAccessToken(tokenpayload)
-         res.status(200).json({status:200,message:"OTP verified successfully",data:{accessToken:token,user:rslt}})
+         console.log("rslt",rslt);
+        if(!rslt[0]){
+            res.status(403).json({status:200,message:"Invalid OTP"})
         }
-        res.status(200).json({status:200,message:"OTP verified successfully",data:{user:rslt}})
+        else{
+
+            const tokenpayload = {uid:rslt[1].id,role:rslt[1].role}
+            const token = await userAuthServices.getAccessToken(tokenpayload)
+            res.status(200).json({status:200,message:"OTP verified successfully",data:{accessToken:token,user:rslt[1]}})
+        }
+        }
 })
 exports.sendForgetOTP = asyncHandler(async(req,res)=>{
     
