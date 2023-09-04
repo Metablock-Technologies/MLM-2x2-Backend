@@ -204,8 +204,8 @@ class userAuthServices {
       throw new ApiBadRequestError("OTP has Expired");
     }
     console.log("OTP",String(checkUser.email_otp),String(OTP),String(checkUser.email_otp) == String(OTP) );
-    if (checkUser.email_otp == OTP || true) {
-    // if (String(checkUser.email_otp) == String(OTP) ) {
+    // if (checkUser.email_otp == OTP || true) {
+    if (String(checkUser.email_otp) == String(OTP) ) {
       checkUser.is_email_verified = true;
       await checkUser.save();
       return [true,checkUser]
@@ -236,8 +236,8 @@ class userAuthServices {
     ) {
       throw new ApiBadRequestError("OTP has Expired");
     }
-    if (checkUser.email_otp == OTP || true) {
-    // if (checkUser.email_otp == OTP ) {
+    // if (checkUser.email_otp == OTP || true) {
+    if (String(checkUser.email_otp) == String(OTP) ) {
       checkUser.is_email_verified = true;
       await checkUser.save();
     }
