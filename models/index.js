@@ -11,6 +11,8 @@ const { UserAuthentication } = require("./UserAuthentication");
 const { Payment } = require("./Payments");
 const { LogWebhook } = require("./LogWebhook");
 const { PaymentCallBackLog } = require("./PaymentCallBackLog");
+const { MoneyRequest } = require("./MoneyRequest");
+const { TempWallet } = require("./TempWallet");
 
 
 module.exports = {
@@ -23,7 +25,9 @@ module.exports = {
   Autopool2,
   Transaction,
   Payment,
-LogWebhook,
+  LogWebhook,
   UserAuthentication,
   PaymentCallBackLog,
+  MoneyRequest,
+  TempWallet,
 };

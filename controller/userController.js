@@ -13,6 +13,8 @@ const {
   Referral,
   Renewal,
   Payment,
+  TempWallet,
+  MoneyRequest,
 } = require("../models/index");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
@@ -22,6 +24,7 @@ const { walletServices } = require("../services");
 var nodemailer = require("nodemailer");
 const { Op } = require("sequelize");
 const { default: axios } = require("axios");
+const userAuthServices = require("../services/userAuthServices");
 async function getUserTransaction(req, res, next) {
   try {
     const rslt = await User.findAll({
@@ -163,6 +166,20 @@ async function signUp(req, res, next) {
         id: uid,
       },
     });
+    if (user.isCreated) {
+      throw new ApiBadRequestError(
+        "User is already created and details are added."
+      );
+    }
+
+    const checkreferral = await User.findOne({
+      where: {
+        hashcode: referral,
+      },
+    });
+    if (!checkreferral) {
+      throw new ApiBadRequestError("Invalid referral code");
+    }
 
     user.name = name;
     user.username = username;
@@ -171,6 +188,10 @@ async function signUp(req, res, next) {
     password = bcrypt.hashSync(password, salt);
     user.password = password;
     await user.save();
+    const tempWallet = await TempWallet.create({
+      balance: 0,
+      user_id: user.id,
+    });
     return res
       .status(201)
       .json({ message: "User created successfully", user: user });
@@ -208,7 +229,7 @@ async function getUserProfile(req, res, next) {
         },
       ],
     });
-    console.log("ajsdklajfsdkljfaklsdklfajsdl",user);
+    console.log("ajsdklajfsdkljfaklsdklfajsdl", user);
     let metadata = {};
     const referraluser = await Referral.findOne({
       where: {
@@ -323,7 +344,7 @@ async function initialpayment(req, res, next) {
   try {
     const headers = {
       "x-api-key": process.env.NOW_PAY_API_KEY,
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     };
     const id = req.user.uid;
     const response = await axios.get(`${api_host}/v1/status`);
@@ -342,14 +363,20 @@ async function initialpayment(req, res, next) {
         },
       });
       let orderId = payment ? payment.order_id : "reff-" + id;
-      const paymentResponse1 =  payment?(await axios.get(`https://api.nowpayments.io/v1/payment/${payment.payment_id}`, { headers })).data:1==1;
+      const paymentResponse1 = payment
+        ? (
+            await axios.get(
+              `https://api.nowpayments.io/v1/payment/${payment.payment_id}`,
+              { headers }
+            )
+          ).data
+        : 1 == 1;
       if (!payment) {
         const createPaymentBody = {
           price_amount: 25,
           price_currency: "usd",
           pay_currency: "usdtbsc",
-          ipn_callback_url:
-            process.env.IPN_CALLBACK_URL,
+          ipn_callback_url: process.env.IPN_CALLBACK_URL,
           order_id: orderId,
           order_description: "Payment for Subscription by Referral.",
           is_fixed_rate: true,
@@ -357,45 +384,64 @@ async function initialpayment(req, res, next) {
         };
         const headers = {
           "x-api-key": "DD8PTQT-7VZ43F4-G8TYV76-PQYR6NV",
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         };
-        let paymentResponse = (await axios.post("https://api.nowpayments.io/v1/payment", createPaymentBody, { headers })).data
-        console.log("paymentResponse",paymentResponse);
+        let paymentResponse = (
+          await axios.post(
+            "https://api.nowpayments.io/v1/payment",
+            createPaymentBody,
+            { headers }
+          )
+        ).data;
+        console.log("paymentResponse", paymentResponse);
         const createUserPayment = await Payment.create({
-          order_id:orderId,
-          type:"referral",
-          status:paymentResponse.payment_status,
-          payment_id:paymentResponse.payment_id,
-          purchase_id:paymentResponse.purchase_id,
-          userId:id
-        }) 
-        res.status(200).json({ message: "Payment Created Successfully", data: paymentResponse });
-      }
-      else {
-        if(paymentResponse1.payment_status == "partially_paid" ){
+          order_id: orderId,
+          type: "referral",
+          status: paymentResponse.payment_status,
+          payment_id: paymentResponse.payment_id,
+          purchase_id: paymentResponse.purchase_id,
+          userId: id,
+        });
+        res
+          .status(200)
+          .json({
+            message: "Payment Created Successfully",
+            data: paymentResponse,
+          });
+      } else {
+        if (paymentResponse1.payment_status == "partially_paid") {
           const createPaymentBody = {
-            purchase_id:payment.purchase_id
+            purchase_id: payment.purchase_id,
           };
-          const paymentResponse = await axios.post("https://api.nowpayments.io/v1/payment", createPaymentBody, { headers }) 
-          payment.order_id=orderId,
-          payment.type="referral",
-          payment.status=paymentResponse.payment_status,
-          payment.payment_id=paymentResponse.payment_id,
-          payment.purchase_id=paymentResponse.purchase_id
-          await payment.save()
-        console.log("paymentResponse",paymentResponse);
+          const paymentResponse = await axios.post(
+            "https://api.nowpayments.io/v1/payment",
+            createPaymentBody,
+            { headers }
+          );
+          (payment.order_id = orderId),
+            (payment.type = "referral"),
+            (payment.status = paymentResponse.payment_status),
+            (payment.payment_id = paymentResponse.payment_id),
+            (payment.purchase_id = paymentResponse.purchase_id);
+          await payment.save();
+          console.log("paymentResponse", paymentResponse);
 
-          res.status(200).json({ message: "Payment Created Successfully", data: paymentResponse });
-
-        }
-        else if(paymentResponse1.payment_status == "failed" || paymentResponse1.payment_status == "expired"){
+          res
+            .status(200)
+            .json({
+              message: "Payment Created Successfully",
+              data: paymentResponse,
+            });
+        } else if (
+          paymentResponse1.payment_status == "failed" ||
+          paymentResponse1.payment_status == "expired"
+        ) {
           let orderId = payment ? payment.paymentCode : "reff-" + id;
           const createPaymentBody = {
             price_amount: 25,
             price_currency: "usd",
             pay_currency: "usdtbsc",
-            ipn_callback_url:
-              process.env.IPN_CALLBACK_URL,
+            ipn_callback_url: process.env.IPN_CALLBACK_URL,
             order_id: orderId,
             order_description: "Payment for Subscription by Referral.",
             is_fixed_rate: true,
@@ -403,22 +449,42 @@ async function initialpayment(req, res, next) {
           };
           const headers = {
             "x-api-key": "DD8PTQT-7VZ43F4-G8TYV76-PQYR6NV",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           };
-          let paymentResponse = (await axios.post("https://api.nowpayments.io/v1/payment", createPaymentBody, { headers })).data
-          payment.order_id=orderId,
-          payment.type="referral",
-          payment.status=paymentResponse.payment_status,
-          payment.payment_id=paymentResponse.payment_id,
-          payment.purchase_id=paymentResponse.purchase_id
-          await payment.save()
-        console.log("paymentResponse",paymentResponse);
+          let paymentResponse = (
+            await axios.post(
+              "https://api.nowpayments.io/v1/payment",
+              createPaymentBody,
+              { headers }
+            )
+          ).data;
+          (payment.order_id = orderId),
+            (payment.type = "referral"),
+            (payment.status = paymentResponse.payment_status),
+            (payment.payment_id = paymentResponse.payment_id),
+            (payment.purchase_id = paymentResponse.purchase_id);
+          await payment.save();
+          console.log("paymentResponse", paymentResponse);
 
-          res.status(200).json({ message: "Payment Created Successfully", data: paymentResponse });
-        }
-        else{
-          const paymentResponse= (await axios.get(`https://api.nowpayments.io/v1/payment/${payment.payment_id}`, { headers })).data
-          res.status(200).json({ message: "Payment Created Successfully", data: paymentResponse });
+          res
+            .status(200)
+            .json({
+              message: "Payment Created Successfully",
+              data: paymentResponse,
+            });
+        } else {
+          const paymentResponse = (
+            await axios.get(
+              `https://api.nowpayments.io/v1/payment/${payment.payment_id}`,
+              { headers }
+            )
+          ).data;
+          res
+            .status(200)
+            .json({
+              message: "Payment Created Successfully",
+              data: paymentResponse,
+            });
         }
       }
     } else {
@@ -429,7 +495,6 @@ async function initialpayment(req, res, next) {
     const rslt = {
       url: "https://nowpayments.io/",
     };
-    
   } catch (err) {
     console.log(err);
     // next(err)
@@ -440,6 +505,9 @@ async function withdrawMoney(req, res, next) {
   try {
     const uid = req.user.uid;
     const amount = req.body.amount;
+    if (!amount) {
+      throw new ApiBadRequestError("enter amount to add.");
+    }
     const address = req.body.address;
     const numberOfrenew = await Renewal.findAndCountAll({
       where: {
@@ -502,6 +570,71 @@ async function withdrawMoney(req, res, next) {
   }
 }
 
+async function getMoneyRequest(req, res, next) {
+  try {
+    let rslt = {};
+    // console.log("user check",req);
+    if (req.user.created) {
+      const user = await UserAuthentication.findOne({
+        where: {
+          nodeId: req.user.uid,
+        },
+      });
+      rslt = await MoneyRequest.findAll({
+        where: {
+          [Op.or]: [
+            {
+              [Op.and]: [
+                {
+                  user_id: req.user.uid,
+                },
+                {
+                  account_type: "existing",
+                },
+              ],
+            },
+            {
+              [Op.and]: [
+                {
+                  user_id: user.id,
+                },
+                {
+                  account_type: "new",
+                },
+              ],
+            },
+          ],
+        },
+      });
+    } else {
+      const user = await UserAuthentication.findOne({
+        where: {
+          id: req.user.uid,
+        },
+      });
+      rslt = await MoneyRequest.findAll({
+        where: {
+          [Op.or]: [
+            {
+              [Op.and]: [
+                {
+                  user_id: user.id,
+                },
+                {
+                  account_type: "new",
+                },
+              ],
+            },
+          ],
+        },
+      });
+    }
+    res.status(200).json({message:"Requests fetched successfully",data:rslt})
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getUserTransaction,
   createReferralUser,
@@ -514,4 +647,5 @@ module.exports = {
   updateName,
   withdrawMoney,
   initialpayment,
+  getMoneyRequest,
 };

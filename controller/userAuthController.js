@@ -82,7 +82,15 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
     if (!rslt[0]) {
       res.status(403).json({ status: 200, message: "Invalid OTP" });
     } else {
-      const tokenpayload = { uid: rslt[1].id, role: rslt[1].role };
+      let tokenpayload
+      if(rslt[1].isPaymentDone){
+        
+        tokenpayload = { uid: rslt[1].nodeId, role: rslt[1].role,created:true };
+      }
+      else{
+
+        tokenpayload = { uid: rslt[1].id, role: rslt[1].role,created:false };
+      }
       const token = await userAuthServices.getAccessToken(tokenpayload);
       res
         .status(200)

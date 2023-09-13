@@ -313,6 +313,9 @@ class userAuthServices {
         "Given email/password combination is invalid"
       );
     }
+    if(!user.isCreated){
+      throw new ApiBadRequestError("Please signup first")
+    }
     const salt = await bcrypt.genSaltSync(10);
     // logger.debug("user",user)
     // logger.debug(password,user.password)
@@ -323,10 +326,20 @@ class userAuthServices {
       }
       const userWithoutPassword = { ...user.toJSON() };
       delete userWithoutPassword.password;
-      return {
-        token: await this.getAccessToken({ uid: user.id, role: user.role }),
-        user: userWithoutPassword,
-      };
+      if(user.isPaymentDone){
+
+        return {
+          token: await this.getAccessToken({ uid: user.nodeId, role: user.role, created:true }),
+          user: userWithoutPassword,
+        };
+      }
+      else{
+
+        return {
+          token: await this.getAccessToken({ uid: user.id, role: user.role, created:false }),
+          user: userWithoutPassword,
+        };
+      }
     } else {
       throw new ApiUnathorizedError(
         "Given email/password combination is invalid"

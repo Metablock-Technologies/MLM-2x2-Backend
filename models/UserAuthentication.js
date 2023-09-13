@@ -69,6 +69,9 @@ const UserAuthentication = sequelize.define("userAuthentication", {
   },
   referred_by:{
     type:DataTypes.STRING
+  },
+  nodeId:{
+    type:DataTypes.INTEGER
   }
 });
 

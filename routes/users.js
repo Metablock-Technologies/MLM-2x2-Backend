@@ -5,12 +5,15 @@ const userController = require("../controller/userController")
 const { User, Transaction } = require('../models/index');
 const { getUserTransaction, createReferralUser, createRenewal, UserAuthentication } = require('../controller/userController');
 const { isVerifiedUser,verifyRole } = require('../middlewares/authMiddleware');
-
+const paymentController = require("../controller/paymentController");
+const { fileUpload } = require('../config/multerConfig');
 /* GET users listing. */
 // userRouter.get('/', getUserTransaction);
 // console.log("here");
-userRouter.post('/referral',isVerifiedUser, createReferralUser);
-userRouter.post('/renewal',isVerifiedUser, createRenewal);
+// userRouter.post('/referral',isVerifiedUser, createReferralUser);
+// userRouter.post('/renewal',isVerifiedUser, createRenewal);
+
+userRouter.post('/addmoneyrequest',isVerifiedUser,fileUpload.single('file'),paymentController.addMoney)
 userRouter.post("/otp",userAuthController.sendOTP)
 userRouter.post("/verify",userAuthController.verifyOTP)
 userRouter.get("/getusername",userAuthController.getUsername)
@@ -29,6 +32,7 @@ userRouter.get("/myrenew/:userId",isVerifiedUser,userController.getMyRenew)
 userRouter.get("/myrenew",isVerifiedUser,userController.getMyRenew)
 userRouter.post("/changepassword",isVerifiedUser,userAuthController.changepassword)
 userRouter.post("/initialpayment",isVerifiedUser,userController.initialpayment)
-userRouter.post("/withdraw",isVerifiedUser,userController.withdrawMoney)
+userRouter.post("/withdrawmoneyrequest",isVerifiedUser,userController.withdrawMoney)
 userRouter.post("/block",isVerifiedUser,verifyRole("admin"),userAuthController.blockUser)
+userRouter.get("/moneyrequest",isVerifiedUser,userController.getMoneyRequest)
 module.exports = userRouter;
