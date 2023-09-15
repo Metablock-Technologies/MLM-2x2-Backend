@@ -675,7 +675,7 @@ async function activateAcc(req, res, next) {
         ...(!req.user.created && { id: req.user.uid }),
       },
     });
-
+    req.user.created = payeeuser.isPaymentDone
     if (!req.user.created) {
       const tempWallet = await TempWallet.findOne({
         where: {
