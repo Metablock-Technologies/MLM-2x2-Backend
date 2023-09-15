@@ -219,7 +219,7 @@ async function getUserProfile(req, res, next) {
     // if (!userAuth) {
     //   throw Api404Error("No user Found");
     // }
-    if (req.user.created) {
+    if (req.user.created || req.params.userId) {
       const user = await User.findOne({
         where: {
           id: uid,
@@ -277,9 +277,28 @@ async function getUserProfile(req, res, next) {
           id: req.user.uid,
         },
       });
+      let tempWallet
+      if(user.isPaymentDone){
+        tempWallet = await Wallet.findOne({
+          where:{
+            userId:user.nodeId
+          }
+        })
+      }
+      else{
+
+        tempWallet = await TempWallet.findOne({
+          where:
+          {
+            user_id:user.id
+          }
+        })
+      }
+      // user.wallet = tempWallet
+      let respuser = {...user.dataValues,wallet:tempWallet}
       res
         .status(200)
-        .json({ message: "User fetched successfully", data: user });
+        .json({ message: "User fetched successfully", data: respuser });
     }
   } catch (err) {
     next(err);
