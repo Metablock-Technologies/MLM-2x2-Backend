@@ -794,6 +794,7 @@ async function fundtransfer(req, res, next) {
     if (isNaN(amount)) {
       throw new ApiBadRequestError("amount is not a valid number");
     }
+    let resp = {}
     const sender = await UserAuthentication.findOne({
       where: {
         ...(req.user.created && { nodeId: req.user.uid }),
@@ -882,10 +883,11 @@ async function fundtransfer(req, res, next) {
           userId: receiver.nodeId,
         },
       });
-
+      
       console.log("reciever existing ", wallet.balance);
       wallet.balance = parseFloat(wallet.balance) + parseFloat(amount);
       await wallet.save();
+      resp.wallet = wallet
       console.log("reciever existing ", wallet.balance);
       fundTransfer.receiver = receiver.nodeId;
       fundTransfer.receiver_type = "existing";
@@ -895,17 +897,17 @@ async function fundtransfer(req, res, next) {
           user_id: receiver.id,
         },
       });
-
       console.log("receiver new ", wallet.balance);
       wallet.balance = parseFloat(wallet.balance) + parseFloat(amount);
       await wallet.save();
+      resp.wallet = wallet
       console.log("receiver new ", wallet.balance);
       fundTransfer.receiver = receiver.id;
       fundTransfer.receiver_type = "new";
     }
     console.log("fundtransfer ", fundTransfer);
     await FundTransferHistory.create(fundTransfer);
-    await res.status(200).json({ message: "Funds transferred successfully" });
+    await res.status(200).json({ message: "Funds transferred successfully",data:resp });
   } catch (err) {
     next(err);
   }
