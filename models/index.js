@@ -13,6 +13,7 @@ const { LogWebhook } = require("./LogWebhook");
 const { PaymentCallBackLog } = require("./PaymentCallBackLog");
 const { MoneyRequest } = require("./MoneyRequest");
 const { TempWallet } = require("./TempWallet");
+const { FundTransferHistory } = require("./FundTransferHistory");
 
 
 module.exports = {
@@ -30,4 +31,5 @@ module.exports = {
   PaymentCallBackLog,
   MoneyRequest,
   TempWallet,
+  FundTransferHistory,
 };

@@ -11,7 +11,7 @@ exports.callback = asyncHandler(async (req, res) => {
 
 exports.addMoney = asyncHandler(async (req, res) => {
   // const uid = req.user.id
-
+  console.log("test user", req.user);
   const { amount } = req.body;
   if (!amount) {
     throw new ApiBadRequestError("enter amount to add.");

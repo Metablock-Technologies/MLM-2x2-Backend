@@ -14,6 +14,7 @@ const bcrypt = require("bcrypt");
 const { log } = require("console");
 
 const { ApiBadRequestError } = require("../errors");
+const { Op } = require("sequelize");
 
 class UserServices {
   async generateUniqueHash() {
@@ -338,29 +339,44 @@ class UserServices {
     let arr = []
     let arrprocess = [parseInt(uid)]
     console.log("arrprocess",arrprocess);
+    const usersmaxid = await User.max('id')
     while(arrprocess.length > 0){
       let x = arrprocess.shift()
       let y1 = 2*parseInt(x) 
       let y2 = 2*parseInt(x) + 1
-      let usery1 = await User.findOne({
-        where:{
-          id : y1
-        }
-      })
-      let usery2 = await User.findOne({
-        where:{
-          id : y2
-        }
-      })
-      if( usery1){
+      // let usery1 = await User.findOne({
+      //   where:{
+      //     id : y1
+      //   }
+      // })
+      // let usery2 = await User.findOne({
+      //   where:{
+      //     id : y2
+      //   }
+      // })
+      // if( usery1){
+      if( y1 <= usersmaxid){
         arr.push(y1)
         arrprocess.push(y1)
       }
-      if( usery2){
+      // if( usery2){
+      if( y2 <= usersmaxid){
         arr.push(y2)
         arrprocess.push(y2)
       }
     }
+    const rslt = await User.findAll({
+      attributes:["id"],
+      where:{
+        id:{
+          [Op.in]:arr
+        }
+      },
+      order:[
+        ["id","ASC"]
+      ]
+    })
+    arr = rslt.map(idobj=>idobj.id)
     return arr
   }
   async getMyRenew(uid){

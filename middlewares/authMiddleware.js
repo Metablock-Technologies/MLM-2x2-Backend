@@ -36,7 +36,7 @@ const isVerifiedUser = async (req, res, next) => {
 
 const verifyPayment = async(req,res,next) =>{
   if(!req.user.created){
-    throw new ApiForbiddenError("Please activate your Id to access this route")
+    throw new ApiForbiddenError("Please activate your Id to access this route or login again if payment done.")
   }
   else{
     next()

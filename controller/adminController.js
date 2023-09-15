@@ -5,8 +5,13 @@ const {
   Wallet,
   Income_report,
   MoneyRequest,
+  UserAuthentication,
+  TempWallet,
 } = require("../models");
 const asyncHandler = require("express-async-handler");
+const { Api404Error, ApiBadRequestError } = require("../errors");
+const { walletServices } = require("../services");
+const { json } = require("body-parser");
 exports.getDashboard = asyncHandler(async (req, res) => {
   const data = {};
   data.totalMembers = (await User.findAndCountAll().count) || 0;
@@ -81,5 +86,88 @@ exports.getMoneyRequest = asyncHandler(async (req, res) => {
       type: "withdraw",
     },
   });
-  res.status(200).json({message:"Requests fetched successfully",data:{addMoney,withdrawMoney}})
+  res
+    .status(200)
+    .json({
+      message: "Requests fetched successfully",
+      data: { addMoney, withdrawMoney },
+    });
+});
+
+exports.actionMoneyRequest = asyncHandler(async (req, res) => {
+  let { requestId, status, type, account_type, user_id, amount, message } = req.body;
+  if (
+    !requestId ||
+    !(type == "add" || type == "withdraw") ||
+    !amount ||
+    !(account_type == "new" || account_type == "existing") ||
+    !status ||
+    !user_id
+  ) {
+    throw new ApiBadRequestError("Bad data in body, please check, " + req.body)
+  }
+  const request = await MoneyRequest.findOne({
+    where: {
+      id: requestId,
+    },
+  });
+  if(request.status != "pending"){
+    throw new ApiBadRequestError("Request is not in pending state")
+  }
+  if (!request) {
+    throw new Api404Error("MoneyRequest not found.");
+  }
+  if (type == "add") {
+    if (status == "accepted") {
+      const user = await UserAuthentication.findOne({
+        where: {
+          ...(account_type == "new" && { id: user_id }),
+          ...(account_type == "existing" && { nodeId: user_id }),
+        },
+      });
+      if(!user){
+        throw new Api404Error("user not found")
+      }
+      if(user.nodeId){
+        console.log("here existing")
+        account_type = "existing"
+        user_id = user.nodeId
+      }
+      if (account_type == "new") {
+        const tempWallet = await TempWallet.findOne({
+          where: {
+            user_id: user_id,
+          },
+        });
+        tempWallet.balance = parseInt(tempWallet.balance) + parseInt(amount);
+        await tempWallet.save();
+        // await Transaction.create({
+        //     userId:user_id,
+        //     detail:"Add Money to TempWallet",
+        //     amount:amount
+        //   })
+      } else {
+        // const userAdd = await UserAuthentication.findOne({
+        //   where:{
+        //     id:
+        //   }
+        // })
+       
+        await walletServices.addAmountToWallet(user.nodeId,amount)
+        // await Transaction.create({
+        //     userId:user_id,
+        //     detail:"Add Money to Wallet",
+        //     amount:amount
+        //   })
+        // await walletServices.updateIncomeReport()
+      }
+      request.status = "accepted"
+    }
+    else{
+        request.status = status
+    }
+  }
+  request.message = message
+  await request.save()
+  res.status(200).json({message:"action successfull",data:request})
 });

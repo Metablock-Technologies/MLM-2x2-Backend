@@ -15,6 +15,7 @@ const {
   Payment,
   TempWallet,
   MoneyRequest,
+  FundTransferHistory,
 } = require("../models/index");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
@@ -25,6 +26,9 @@ var nodemailer = require("nodemailer");
 const { Op } = require("sequelize");
 const { default: axios } = require("axios");
 const userAuthServices = require("../services/userAuthServices");
+const WalletServices = require("../services/WalletServices");
+const UserServices = require("../services/UserServices");
+const logger = require("../logger");
 async function getUserTransaction(req, res, next) {
   try {
     const rslt = await User.findAll({
@@ -160,6 +164,7 @@ async function signUp(req, res, next) {
     if (!name || !username || !password || !role) {
       throw new ApiBadRequestError("Send all data");
     }
+    username = username.toLowerCase();
 
     const user = await UserAuthentication.findOne({
       where: {
@@ -187,6 +192,7 @@ async function signUp(req, res, next) {
     const salt = await bcrypt.genSaltSync(10);
     password = bcrypt.hashSync(password, salt);
     user.password = password;
+    user.isCreated = true;
     await user.save();
     const tempWallet = await TempWallet.create({
       balance: 0,
@@ -213,57 +219,68 @@ async function getUserProfile(req, res, next) {
     // if (!userAuth) {
     //   throw Api404Error("No user Found");
     // }
-    const user = await User.findOne({
-      where: {
-        id: uid,
-      },
-      attributes: {
-        exclude: ["password"],
-      },
-      include: [
-        {
-          model: Income_report,
-        },
-        {
-          model: Wallet,
-        },
-      ],
-    });
-    console.log("ajsdklajfsdkljfaklsdklfajsdl", user);
-    let metadata = {};
-    const referraluser = await Referral.findOne({
-      where: {
-        referredUserid: uid,
-      },
-    });
-    let sponsorId = "";
-    if (!referraluser) {
-      console.log("here");
-      sponsorId = "None";
-    } else {
-      const refUser = await User.findOne({
+    if (req.user.created) {
+      const user = await User.findOne({
         where: {
-          id: referraluser.referredByUserId,
+          id: uid,
+        },
+        attributes: {
+          exclude: ["password"],
+        },
+        include: [
+          {
+            model: Income_report,
+          },
+          {
+            model: Wallet,
+          },
+        ],
+      });
+      console.log("ajsdklajfsdkljfaklsdklfajsdl", user);
+      let metadata = {};
+      const referraluser = await Referral.findOne({
+        where: {
+          referredUserid: uid,
         },
       });
-      sponsorId = refUser.hashcode;
-    }
-    metadata.sponsorId = sponsorId;
-    let arr = await userServices.getMyteam(uid);
-    metadata.totalUsers = arr.length;
-    metadata.activeUsers = (
-      await User.findAndCountAll({
-        where: {
-          id: {
-            [Op.in]: arr,
+      let sponsorId = "";
+      if (!referraluser) {
+        console.log("here");
+        sponsorId = "None";
+      } else {
+        const refUser = await User.findOne({
+          where: {
+            id: referraluser.referredByUserId,
           },
-          status: "active",
+        });
+        sponsorId = refUser.hashcode;
+      }
+      metadata.sponsorId = sponsorId;
+      let arr = await userServices.getMyteam(uid);
+      metadata.totalUsers = arr.length;
+      metadata.activeUsers = (
+        await User.findAndCountAll({
+          where: {
+            id: {
+              [Op.in]: arr,
+            },
+            status: "active",
+          },
+        })
+      ).count;
+      res
+        .status(200)
+        .json({ message: "User fetched successfully", data: user, metadata });
+    } else {
+      const user = await UserAuthentication.findOne({
+        where: {
+          id: req.user.uid,
         },
-      })
-    ).count;
-    res
-      .status(200)
-      .json({ message: "User fetched successfully", data: user, metadata });
+      });
+      res
+        .status(200)
+        .json({ message: "User fetched successfully", data: user });
+    }
   } catch (err) {
     next(err);
   }
@@ -286,7 +303,7 @@ async function getMyteam(req, res, next) {
 
 async function getTransactions(req, res, next) {
   try {
-    let rslt;
+    let rslt = {};
     const limit = req.query.limit || 1000;
     const offset = req.query.offset || 0;
     if (req.user.role == "admin") {
@@ -402,12 +419,10 @@ async function initialpayment(req, res, next) {
           purchase_id: paymentResponse.purchase_id,
           userId: id,
         });
-        res
-          .status(200)
-          .json({
-            message: "Payment Created Successfully",
-            data: paymentResponse,
-          });
+        res.status(200).json({
+          message: "Payment Created Successfully",
+          data: paymentResponse,
+        });
       } else {
         if (paymentResponse1.payment_status == "partially_paid") {
           const createPaymentBody = {
@@ -426,12 +441,10 @@ async function initialpayment(req, res, next) {
           await payment.save();
           console.log("paymentResponse", paymentResponse);
 
-          res
-            .status(200)
-            .json({
-              message: "Payment Created Successfully",
-              data: paymentResponse,
-            });
+          res.status(200).json({
+            message: "Payment Created Successfully",
+            data: paymentResponse,
+          });
         } else if (
           paymentResponse1.payment_status == "failed" ||
           paymentResponse1.payment_status == "expired"
@@ -466,12 +479,10 @@ async function initialpayment(req, res, next) {
           await payment.save();
           console.log("paymentResponse", paymentResponse);
 
-          res
-            .status(200)
-            .json({
-              message: "Payment Created Successfully",
-              data: paymentResponse,
-            });
+          res.status(200).json({
+            message: "Payment Created Successfully",
+            data: paymentResponse,
+          });
         } else {
           const paymentResponse = (
             await axios.get(
@@ -479,12 +490,10 @@ async function initialpayment(req, res, next) {
               { headers }
             )
           ).data;
-          res
-            .status(200)
-            .json({
-              message: "Payment Created Successfully",
-              data: paymentResponse,
-            });
+          res.status(200).json({
+            message: "Payment Created Successfully",
+            data: paymentResponse,
+          });
         }
       }
     } else {
@@ -629,7 +638,286 @@ async function getMoneyRequest(req, res, next) {
         },
       });
     }
-    res.status(200).json({message:"Requests fetched successfully",data:rslt})
+    res
+      .status(200)
+      .json({ message: "Requests fetched successfully", data: rslt });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function activateAcc(req, res, next) {
+  try {
+    // const {username } = req.body
+    const payeeId = req.user.uid;
+    const payeeuser = await UserAuthentication.findOne({
+      where: {
+        ...(req.user.created && { nodeId: req.user.uid }),
+        ...(!req.user.created && { id: req.user.uid }),
+      },
+    });
+
+    if (!req.user.created) {
+      const tempWallet = await TempWallet.findOne({
+        where: {
+          user_id: payeeId,
+        },
+      });
+
+      if (parseFloat(tempWallet.balance) < parseFloat(AMOUNT)) {
+        throw new ApiBadRequestError(
+          "Insufficient balance. Required at least: " +
+            AMOUNT +
+            ". Current: " +
+            tempWallet.balance
+        );
+      } else {
+        tempWallet.balance =
+          parseFloat(tempWallet.balance) - parseFloat(AMOUNT);
+        await tempWallet.save();
+        let {
+          username,
+          email,
+          password,
+          name,
+          phonenumber,
+          referred_by,
+          role,
+        } = payeeuser;
+        phonenumber = payeeuser.phone;
+
+        // if (payeeuser?.isCreated) {
+        //   throw new ApiBadRequestError("User is already created. Please login");
+        // }
+        //TODO: uncomment this
+        // if(!(userAuth?.isPaymentDone)){
+        //   throw new ApiBadRequestError("Payment of registration pending.")
+        // }
+        const referredByUser = await User.findOne({
+          where: {
+            hashcode: referred_by,
+          },
+        });
+        console.log("referred_by", referredByUser?.id);
+        //refreed by or root, not root then use referral table to access referral_id to the refrral name
+        if (
+          !username ||
+          !email ||
+          !password ||
+          !name ||
+          !phonenumber ||
+          !referred_by
+        )
+          return res
+            .status(400)
+            .json({ message: "All fields are required", data: userAuth });
+        const rslt = await userServices.createReferralUser(
+          username,
+          email,
+          password,
+          name,
+          phonenumber,
+          referredByUser?.id,
+          role
+        );
+        payeeuser.isPaymentDone = true;
+        payeeuser.nodeId = rslt.newUser.id;
+        await payeeuser.save();
+        const wallet = await WalletServices.createWallet(rslt.newUser.id);
+
+        const referralAmount = 0.36 * AMOUNT;
+        await walletServices.addAmountToWallet(
+          referredByUser.id,
+          referralAmount
+        );
+        await walletServices.addAmountToWallet(
+          rslt.newUser.id,
+          tempWallet.balance
+        );
+        // await TempWallet.destroy({
+        //   where:{
+
+        //   }
+        // })
+
+        res.status(200).json({ message: "Created referral user" });
+      }
+    } else {
+      const id = req.user.uid;
+      if (!id) {
+        throw new ApiBadRequestError("id not found");
+      }
+      //refreed by or root, not root then use referral table to access referral_id to the refrral name
+      //STEP 1------>> Create user and income report
+      const rslt = await UserServices.createRenewal(id);
+
+      //STEP 2------>> Add levelincome
+      const wallet = await Wallet.findOne({
+        where: {
+          userId: id,
+        },
+      });
+      if (parseFloat(wallet.balance) < parseFloat(AMOUNT)) {
+        throw new ApiBadRequestError(
+          "Insufficient balance. Required at least: " +
+            AMOUNT +
+            ". Current: " +
+            wallet.balance
+        );
+      } else {
+        wallet.balance = parseFloat(wallet.balance) - parseFloat(AMOUNT);
+        await wallet.save();
+      }
+      const levelincomeAmount = 0.6 * AMOUNT;
+      await walletServices.addLevelOrderIncome(
+        rslt.newUser.id,
+        levelincomeAmount
+      );
+      //STEP 3------>> Add 4% to autopool 1 and 36% to autopool 2
+      const autoPool1Amount = 0.04 * AMOUNT;
+      await walletServices.addAmountToAutoPool1(autoPool1Amount);
+
+      const autoPool2Amount = 0.36 * AMOUNT;
+      await walletServices.addAmountToAutoPool2(autoPool2Amount);
+      return res
+        .status(201)
+        .json({ message: "Renewal User created successfully", user: rslt });
+    }
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function fundtransfer(req, res, next) {
+  try {
+    const { amount } = req.body;
+    if (isNaN(amount)) {
+      throw new ApiBadRequestError("amount is not a valid number");
+    }
+    const sender = await UserAuthentication.findOne({
+      where: {
+        ...(req.user.created && { nodeId: req.user.uid }),
+        ...(!req.user.created && { id: req.user.uid }),
+      },
+    });
+    let fundTransfer = {};
+    fundTransfer.amount = amount;
+    const { username } = req.body;
+    if (!username) {
+      throw new ApiBadRequestError("Please enter a username in the request");
+    }
+    const receiver = await UserAuthentication.findOne({
+      where: {
+        username,
+        isCreated: true,
+      },
+    });
+    if (!receiver) {
+      throw new Api404Error("No user found with the user name");
+    }
+    if (req.user.created) {
+      const wallet = await Wallet.findOne({
+        where: {
+          userId: req.user.uid,
+        },
+      });
+      console.log(
+        "parseFloat(wallet.balance) < parseFloat(AMOUNT)",
+        parseFloat(wallet.balance),
+        parseFloat(AMOUNT)
+      );
+      if (
+        parseFloat(wallet.balance) < parseFloat(amount) &&
+        req.user.role != "admin"
+      ) {
+        throw new ApiBadRequestError(
+          "Insufficient balance. Required at least: " +
+            amount +
+            ". Current: " +
+            wallet.balance
+        );
+      } else {
+        console.log("sender existing ", wallet.balance);
+        if (req.user.role != "admin"){
+          wallet.balance = parseFloat(wallet.balance) - parseFloat(amount);
+
+        }
+        await wallet.save();
+        console.log("sender existing ", wallet.balance);
+        fundTransfer.sender_type = "existing";
+        fundTransfer.sender = req.user.uid;
+      }
+    } else {
+      const wallet = await TempWallet.findOne({
+        where: {
+          user_id: req.user.uid,
+        },
+      });
+      console.log(
+        "parseFloat(wallet.balance) < parseFloat(AMOUNT)",
+        parseFloat(wallet.balance),
+        parseFloat(AMOUNT)
+      );
+
+      if (parseFloat(wallet.balance) < parseFloat(amount)) {
+        throw new ApiBadRequestError(
+          "Insufficient balance. Required at least: " +
+            amount +
+            ". Current: " +
+            wallet.balance
+        );
+      } else {
+        console.log("sender new ", wallet.balance);
+        wallet.balance = parseFloat(wallet.balance) - parseFloat(amount);
+        await wallet.save();
+        console.log("sender new ", wallet.balance);
+        fundTransfer.sender_type = "new";
+        fundTransfer.sender = req.user.uid;
+      }
+    }
+
+    if (receiver.isPaymentDone) {
+      const wallet = await Wallet.findOne({
+        where: {
+          userId: receiver.nodeId,
+        },
+      });
+
+      console.log("reciever existing ", wallet.balance);
+      wallet.balance = parseFloat(wallet.balance) + parseFloat(amount);
+      await wallet.save();
+      console.log("reciever existing ", wallet.balance);
+      fundTransfer.receiver = receiver.nodeId;
+      fundTransfer.receiver_type = "existing";
+    } else {
+      const wallet = await TempWallet.findOne({
+        where: {
+          user_id: receiver.id,
+        },
+      });
+
+      console.log("receiver new ", wallet.balance);
+      wallet.balance = parseFloat(wallet.balance) + parseFloat(amount);
+      await wallet.save();
+      console.log("receiver new ", wallet.balance);
+      fundTransfer.receiver = receiver.id;
+      fundTransfer.receiver_type = "new";
+    }
+    console.log("fundtransfer ", fundTransfer);
+    await FundTransferHistory.create(fundTransfer);
+    await res.status(200).json({ message: "Funds transferred successfully" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function fundtransferHistory(req, res, next) {
+  try {
+    const rslt = await FundTransferHistory.findAll();
+    res.status(200).json({
+      message: "Fund transfer history Fetched successfully",
+      data: rslt,
+    });
   } catch (err) {
     next(err);
   }
@@ -648,4 +936,7 @@ module.exports = {
   withdrawMoney,
   initialpayment,
   getMoneyRequest,
+  activateAcc,
+  fundtransfer,
+  fundtransferHistory,
 };

@@ -14,6 +14,9 @@ const { fileUpload } = require('../config/multerConfig');
 // userRouter.post('/renewal',isVerifiedUser, createRenewal);
 
 userRouter.post('/addmoneyrequest',isVerifiedUser,fileUpload.single('file'),paymentController.addMoney)
+userRouter.post('/activate',isVerifiedUser,userController.activateAcc) //TODO
+userRouter.post('/fundtransfer',isVerifiedUser,userController.fundtransfer) //TODO
+userRouter.get('/fundtransfer',isVerifiedUser,userController.fundtransferHistory) //TODO
 userRouter.post("/otp",userAuthController.sendOTP)
 userRouter.post("/verify",userAuthController.verifyOTP)
 userRouter.get("/getusername",userAuthController.getUsername)
