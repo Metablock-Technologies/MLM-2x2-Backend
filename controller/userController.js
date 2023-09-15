@@ -976,11 +976,81 @@ async function fundtransfer(req, res, next) {
 
 async function fundtransferHistory(req, res, next) {
   try {
-    const rslt = await FundTransferHistory.findAll();
-    res.status(200).json({
-      message: "Fund transfer history Fetched successfully",
-      data: rslt,
-    });
+    const {userId,type} = req.query
+    if(!userId){
+      throw new ApiBadRequestError("userId not present in the query parameter: ", req.query)
+    }
+    if(userId == "all"){
+      const rslt = await FundTransferHistory.findAll();
+      res.status(200).json({
+        message: "Fund transfer history Fetched successfully",
+        data: rslt,
+      });
+
+    }
+    else{
+      if(!type){
+        throw new ApiBadRequestError("type not present in the query parameter: ", req.query)
+        
+      }
+      const user = await UserAuthentication.findOne({
+        where: {
+          ...(req.user.created && { nodeId: req.user.uid }),
+          ...(!req.user.created && { id: req.user.uid }),
+        },
+      });
+      if(type == "receiver"){
+
+        const rslt = await FundTransferHistory.findAll({
+          where:{
+
+            [Op.or]:[
+              {
+                receiver:user.id,
+                receiver_type:"new"
+              },
+              (user.isPaymentDone && {
+                receiver:user.nodeId,
+                receiver_type:"existing"
+              })
+            ]
+          }
+        })
+        res.status(200).json({
+          message: "Funds Received history Fetched successfully",
+          data: rslt,
+        });
+        
+
+      }
+      else if(type=="sender"){
+
+        const rslt = await FundTransferHistory.findAll({
+          where:{
+
+            [Op.or]:[
+              {
+                sender:user.id,
+                sender_type:"new"
+              },
+              (user.isPaymentDone && {
+                sender:user.nodeId,
+                sender_type:"existing"
+              })
+            ]
+          }
+        })
+        res.status(200).json({
+          message: "Funds Sent history Fetched successfully",
+          data: rslt,
+        });
+        
+
+      }
+      else{
+        throw new ApiBadRequestError("type should be either receiver or sender")
+      }
+    }
   } catch (err) {
     next(err);
   }
