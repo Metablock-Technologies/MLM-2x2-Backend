@@ -17,6 +17,7 @@ userRouter.post('/addmoneyrequest',isVerifiedUser,fileUpload.single('file'),paym
 userRouter.post('/activate',isVerifiedUser,userController.activateAcc) //TODO
 userRouter.post('/fundtransfer',isVerifiedUser,userController.fundtransfer) //TODO
 userRouter.get('/fundtransfer',isVerifiedUser,userController.fundtransferHistory) //TODO
+userRouter.post("/withdrawmoneyrequest",isVerifiedUser,userController.withdrawMoney)
 userRouter.post("/otp",userAuthController.sendOTP)
 userRouter.post("/verify",userAuthController.verifyOTP)
 userRouter.get("/getusername",userAuthController.getUsername)
@@ -35,7 +36,6 @@ userRouter.get("/myrenew/:userId",isVerifiedUser,userController.getMyRenew)
 userRouter.get("/myrenew",isVerifiedUser,userController.getMyRenew)
 userRouter.post("/changepassword",isVerifiedUser,userAuthController.changepassword)
 userRouter.post("/initialpayment",isVerifiedUser,userController.initialpayment)
-userRouter.post("/withdrawmoneyrequest",isVerifiedUser,userController.withdrawMoney)
 userRouter.post("/block",isVerifiedUser,verifyRole("admin"),userAuthController.blockUser)
 userRouter.get("/moneyrequest",isVerifiedUser,userController.getMoneyRequest)
 module.exports = userRouter;

@@ -80,11 +80,17 @@ exports.getMoneyRequest = asyncHandler(async (req, res) => {
     where: {
       type: "add",
     },
+    order:[
+      ["createdAt","DESC"]
+    ]
   });
   const withdrawMoney = await MoneyRequest.findAll({
     where: {
       type: "withdraw",
     },
+    order:[
+      ["createdAt","DESC"]
+    ]
   });
   res
     .status(200)

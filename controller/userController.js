@@ -277,25 +277,22 @@ async function getUserProfile(req, res, next) {
           id: req.user.uid,
         },
       });
-      let tempWallet
-      if(user.isPaymentDone){
+      let tempWallet;
+      if (user.isPaymentDone) {
         tempWallet = await Wallet.findOne({
-          where:{
-            userId:user.nodeId
-          }
-        })
-      }
-      else{
-
+          where: {
+            userId: user.nodeId,
+          },
+        });
+      } else {
         tempWallet = await TempWallet.findOne({
-          where:
-          {
-            user_id:user.id
-          }
-        })
+          where: {
+            user_id: user.id,
+          },
+        });
       }
       // user.wallet = tempWallet
-      let respuser = {...user.dataValues,wallet:tempWallet}
+      let respuser = { ...user.dataValues, wallet: tempWallet };
       res
         .status(200)
         .json({ message: "User fetched successfully", data: respuser });
@@ -531,68 +528,108 @@ async function initialpayment(req, res, next) {
 }
 async function withdrawMoney(req, res, next) {
   try {
-    const uid = req.user.uid;
+    let uid = req.user.uid;
     const amount = req.body.amount;
     if (!amount) {
       throw new ApiBadRequestError("enter amount to add.");
     }
     const address = req.body.address;
-    const numberOfrenew = await Renewal.findAndCountAll({
+    let withdrawUser = await UserAuthentication.findOne({
       where: {
-        main_id: uid,
+        ...(req.user.created && { nodeId: req.user.uid }),
+        ...(!req.user.created && { id: req.user.uid }),
       },
     });
-
-    const wallet = await Wallet.findOne({
-      where: {
-        userId: uid,
-      },
-    });
-
-    if (amount > wallet.balance) {
-      throw new ApiBadRequestError("Insufficient Funds");
+    if (withdrawUser.isPaymentDone) {
+      req.user.created = true;
+      req.user.uid = withdrawUser.nodeId;
     }
 
-    if (amount < 5) {
-      throw new ApiBadRequestError("Minimum withdraw amount is 5");
-    }
-    if (
-      numberOfrenew.count == 0 &&
-      parseFloat(wallet.withdraw_amount) + parseFloat(amount) > 100
-    ) {
-      throw new ApiBadRequestError(
-        "You can only withdraw upto 100 with 0 renew id."
-      );
-    }
-    if (
-      numberOfrenew.count == 1 &&
-      parseFloat(wallet.withdraw_amount) + parseFloat(amount) > 200
-    ) {
-      throw new ApiBadRequestError(
-        "You can only withdraw upto 200 with 1 renew id."
-      );
-    }
-    if (
-      numberOfrenew.count == 2 &&
-      parseFloat(wallet.withdraw_amount) + parseFloat(amount) > 400
-    ) {
-      throw new ApiBadRequestError(
-        "You can only withdraw upto 200 with 1 renew id."
-      );
-    }
-    wallet.withdraw_amount =
-      parseFloat(wallet.withdraw_amount) + parseFloat(amount);
-    wallet.balance = parseFloat(wallet.balance) - parseFloat(amount);
-    //TODO add send USDTBSC via API
-    await wallet.save();
+    if (!req.user.created) {
+      const withdrawRequest = await MoneyRequest.create({
+        amount,
+        type: "withdraw",
+        account_type: "new",
 
-    await Transaction.create({
-      userId: uid,
-      detail: "Withdrawal",
-      amount: amount,
-    });
+        user_id: uid,
+        link: address,
+      });
+      console.log("withdrawRequest",withdrawRequest);
+      res.status(200).json({
+        message: "Withdraw request created successfully",
+        data: withdrawRequest,
+      });
+    } else {
+      const numberOfrenew = await Renewal.findAndCountAll({
+        where: {
+          main_id: uid,
+        },
+      });
 
-    res.status(200).json({ message: "Funds have been withdrawn successfully" });
+      const wallet = await Wallet.findOne({
+        where: {
+          userId: uid,
+        },
+      });
+
+      if (amount > wallet.balance) {
+        throw new ApiBadRequestError("Insufficient Funds");
+      }
+
+      if (amount < 5) {
+        throw new ApiBadRequestError("Minimum withdraw amount is 5");
+      }
+      if (
+        numberOfrenew.count == 0 &&
+        parseFloat(wallet.withdraw_amount) + parseFloat(amount) > 100
+      ) {
+        throw new ApiBadRequestError(
+          "You can only withdraw upto 100 with 0 renew id."
+        );
+      }
+      if (
+        numberOfrenew.count == 1 &&
+        parseFloat(wallet.withdraw_amount) + parseFloat(amount) > 200
+      ) {
+        throw new ApiBadRequestError(
+          "You can only withdraw upto 200 with 1 renew id."
+        );
+      }
+      if (
+        numberOfrenew.count == 2 &&
+        parseFloat(wallet.withdraw_amount) + parseFloat(amount) > 400
+      ) {
+        throw new ApiBadRequestError(
+          "You can only withdraw upto 200 with 1 renew id."
+        );
+      }
+      // wallet.withdraw_amount =
+      //   parseFloat(wallet.withdraw_amount) + parseFloat(amount);
+      // wallet.balance = parseFloat(wallet.balance) - parseFloat(amount);
+      // //TODO add send USDTBSC via API
+      // await wallet.save();
+
+      // await Transaction.create({
+      //   userId: uid,
+      //   detail: "Withdrawal",
+      //   amount: amount,
+      // });
+
+      const withdrawRequest = await MoneyRequest.create({
+        amount,
+        type: "withdraw",
+        account_type: "existing",
+
+        user_id: uid,
+        link: address,
+      });
+      res.status(200).json({
+        message: "Withdraw request created successfully",
+        data: withdrawRequest,
+      });
+
+ 
+    }
   } catch (err) {
     next(err);
   }
@@ -675,10 +712,10 @@ async function activateAcc(req, res, next) {
         ...(!req.user.created && { id: req.user.uid }),
       },
     });
-    req.user.created = payeeuser.isPaymentDone
-    if(req.user.created){
-      req.user.uid = payeeuser.nodeId
-      payeeId = req.user.uid
+    req.user.created = payeeuser.isPaymentDone;
+    if (req.user.created) {
+      req.user.uid = payeeuser.nodeId;
+      payeeId = req.user.uid;
     }
     if (!req.user.created) {
       const tempWallet = await TempWallet.findOne({
@@ -817,7 +854,7 @@ async function fundtransfer(req, res, next) {
     if (isNaN(amount)) {
       throw new ApiBadRequestError("amount is not a valid number");
     }
-    let resp = {}
+    let resp = {};
     const sender = await UserAuthentication.findOne({
       where: {
         ...(req.user.created && { nodeId: req.user.uid }),
@@ -862,9 +899,8 @@ async function fundtransfer(req, res, next) {
         );
       } else {
         console.log("sender existing ", wallet.balance);
-        if (req.user.role != "admin"){
+        if (req.user.role != "admin") {
           wallet.balance = parseFloat(wallet.balance) - parseFloat(amount);
-
         }
         await wallet.save();
         console.log("sender existing ", wallet.balance);
@@ -906,11 +942,11 @@ async function fundtransfer(req, res, next) {
           userId: receiver.nodeId,
         },
       });
-      
+
       console.log("reciever existing ", wallet.balance);
       wallet.balance = parseFloat(wallet.balance) + parseFloat(amount);
       await wallet.save();
-      resp.wallet = wallet
+      resp.wallet = wallet;
       console.log("reciever existing ", wallet.balance);
       fundTransfer.receiver = receiver.nodeId;
       fundTransfer.receiver_type = "existing";
@@ -923,14 +959,16 @@ async function fundtransfer(req, res, next) {
       console.log("receiver new ", wallet.balance);
       wallet.balance = parseFloat(wallet.balance) + parseFloat(amount);
       await wallet.save();
-      resp.wallet = wallet
+      resp.wallet = wallet;
       console.log("receiver new ", wallet.balance);
       fundTransfer.receiver = receiver.id;
       fundTransfer.receiver_type = "new";
     }
     console.log("fundtransfer ", fundTransfer);
     await FundTransferHistory.create(fundTransfer);
-    await res.status(200).json({ message: "Funds transferred successfully",data:resp });
+    await res
+      .status(200)
+      .json({ message: "Funds transferred successfully", data: resp });
   } catch (err) {
     next(err);
   }
