@@ -668,8 +668,8 @@ async function getMoneyRequest(req, res, next) {
 async function activateAcc(req, res, next) {
   try {
     // const {username } = req.body
-    const payeeId = req.user.uid;
-    const payeeuser = await UserAuthentication.findOne({
+    let payeeId = req.user.uid;
+    let payeeuser = await UserAuthentication.findOne({
       where: {
         ...(req.user.created && { nodeId: req.user.uid }),
         ...(!req.user.created && { id: req.user.uid }),
