@@ -172,6 +172,68 @@ exports.actionMoneyRequest = asyncHandler(async (req, res) => {
     else{
         request.status = status
     }
+  }else{
+    if (status == "accepted") {
+      const user = await UserAuthentication.findOne({
+        where: {
+          ...(account_type == "new" && { id: user_id }),
+          ...(account_type == "existing" && { nodeId: user_id }),
+        },
+      });
+      if(!user){
+        throw new Api404Error("user not found")
+      }
+      if(user.nodeId){
+        console.log("here existing")
+        account_type = "existing"
+        user_id = user.nodeId
+      }
+      if (account_type == "new") {
+        const tempWallet = await TempWallet.findOne({
+          where: {
+            user_id: user_id,
+          },
+        });
+        console.log("temp wallet balance and amount:  ",parseInt(tempWallet.balance));
+        tempWallet.balance = parseInt(tempWallet.balance) - parseInt(amount);
+        await tempWallet.save();
+        // await Transaction.create({
+        //     userId:user_id,
+        //     detail:"Add Money to TempWallet",
+        //     amount:amount
+        //   })
+      } else {
+        // const userAdd = await UserAuthentication.findOne({
+        //   where:{
+        //     id:
+        //   }
+        // })
+        const wallet = await Wallet.findOne({
+          where:{
+            userId:user.nodeId
+
+          }
+        })
+
+        wallet.withdraw_amount =
+        parseFloat(wallet.withdraw_amount) + parseFloat(amount);
+      wallet.balance = parseFloat(wallet.balance) - parseFloat(amount);
+      //TODO add send USDTBSC via API
+      await wallet.save();
+       
+        // await walletServices.addAmountToWallet(user.nodeId,amount)
+        await Transaction.create({
+            userId:user.nodeId,
+            detail:"Withdraw",
+            amount:amount
+          })
+        // await walletServices.updateIncomeReport()
+      }
+      request.status = "accepted"
+    }
+    else{
+        request.status = status
+    }
   }
   request.message = message
   await request.save()
