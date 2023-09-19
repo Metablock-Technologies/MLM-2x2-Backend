@@ -189,6 +189,10 @@ async function signUp(req, res, next) {
     user.name = name;
     user.username = username;
     user.referred_by = referral;
+    const refer = await Referral.create({
+      referredUserId:req.user.uid,
+      referredByUserId:checkreferral.id
+    })
     const salt = await bcrypt.genSaltSync(10);
     password = bcrypt.hashSync(password, salt);
     user.password = password;
@@ -530,6 +534,7 @@ async function withdrawMoney(req, res, next) {
   try {
     let uid = req.user.uid;
     const amount = req.body.amount;
+    console.log("req.user.created: "+req.user.created+" | req.user.uid: "+req.user.uid);
     if (!amount) {
       throw new ApiBadRequestError("enter amount to add.");
     }
@@ -540,10 +545,13 @@ async function withdrawMoney(req, res, next) {
         ...(!req.user.created && { id: req.user.uid }),
       },
     });
+    console.log("withdrawUser: ",withdrawUser);
     if (withdrawUser.isPaymentDone) {
       req.user.created = true;
       req.user.uid = withdrawUser.nodeId;
+      uid = req.user.uid
     }
+    console.log("req.user.created: "+req.user.created+" | req.user.uid: "+req.user.uid);
 
     if (!req.user.created) {
       const withdrawRequest = await MoneyRequest.create({
@@ -566,12 +574,13 @@ async function withdrawMoney(req, res, next) {
         },
       });
 
+      console.log("uid: ",uid);
       const wallet = await Wallet.findOne({
-        where: {
-          userId: uid,
-        },
+        where:{
+          userId:uid
+        }
       });
-
+      console.log("wallet: ",wallet);
       if (amount > wallet.balance) {
         throw new ApiBadRequestError("Insufficient Funds");
       }
@@ -784,12 +793,16 @@ async function activateAcc(req, res, next) {
         payeeuser.nodeId = rslt.newUser.id;
         await payeeuser.save();
         const wallet = await WalletServices.createWallet(rslt.newUser.id);
-
+          console.log("rslt.newUser.id ",rslt.newUser.id)
         const referralAmount = 0.36 * AMOUNT;
         await walletServices.addAmountToWallet(
           referredByUser.id,
           referralAmount
         );
+        await walletServices.updateIncomeReport({
+          referral: referralAmount,
+          userId: referredByUser.id,
+        });
         await walletServices.addAmountToWallet(
           rslt.newUser.id,
           tempWallet.balance
