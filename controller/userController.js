@@ -240,6 +240,16 @@ async function getUserProfile(req, res, next) {
                     },
                 ],
             });
+            const userAuth = await UserAuthentication.findOne({
+                where: {
+                    nodeId: uid,
+                },
+                attributes: ["walletaddress"], // Add "walletaddress" to include
+            });
+            if (userAuth) {
+                user.walletaddress = userAuth.walletaddress;
+            }
+
             console.log("ajsdklajfsdkljfaklsdklfajsdl", user);
             let metadata = {};
             const referraluser = await Referral.findOne({
