@@ -34,7 +34,7 @@ const User = sequelize.define('user', {
     status: {
         type: DataTypes.STRING,
         validate: {
-            isIn: [['active', 'inactive','blocked']]
+            isIn: [['active', 'inactive', 'blocked']]
         },
         allowNull: false
     },
@@ -70,16 +70,16 @@ const User = sequelize.define('user', {
         type: DataTypes.ENUM(Object.values(UserDataType)),
         allowNull: false,
         validate: {
-          isIn: {
-            args: [Object.values(UserDataType)],
-            msg: `Only Allowed Values Are: ${Object.values(UserDataType)} `,
-          },
+            isIn: {
+                args: [Object.values(UserDataType)],
+                msg: `Only Allowed Values Are: ${Object.values(UserDataType)} `,
+            },
         },
-      },
-      type:{
-        type:DataTypes.ENUM,
-        values:["main","renewed"]
-      }
+    },
+    type: {
+        type: DataTypes.ENUM,
+        values: ["main", "renewed"]
+    }
 });
 
 

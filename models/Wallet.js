@@ -40,5 +40,5 @@ User.hasOne(Wallet)
 // Wallet.sync({ alter: true });
 // Renewal.sync({force:true})
 // Referral.sync({force:true})
-// User.sync({alter:true})
+// User.sync({ alter: true })
 module.exports = { Wallet };
