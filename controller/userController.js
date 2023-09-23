@@ -1053,7 +1053,7 @@ async function fundtransferHistory(req, res, next) {
       })
       res.status(200).json({
         message: "Fund transfer history Fetched successfully",
-        data: rslt,
+        data: sendrslt,
       });
     } else {
       if (!type) {
@@ -1083,9 +1083,24 @@ async function fundtransferHistory(req, res, next) {
             ],
           },
         });
+        const sendrslt = rslt.map(async(history)=>{
+            const senderUsername = (await UserAuthentication.findOne({
+                where:{
+                    ...(history.sender_type == "new" && {id:history.sender}),
+                    ...(history.sender_type == "existing" && {nodeId:history.sender})
+                }
+            })).username
+            const receiverUsername = (await UserAuthentication.findOne({
+                where:{
+                    ...(history.receiver_type == "new" && {id:history.receiver}),
+                    ...(history.receiver_type == "existing" && {nodeId:history.receiver})
+                }
+            })).username
+            return {...history.dataValues,senderUsername,receiverUsername}
+          })
         res.status(200).json({
           message: "Funds Received history Fetched successfully",
-          data: rslt,
+          data: sendrslt,
         });
       } else if (type == "sender") {
         const rslt = await FundTransferHistory.findAll({
@@ -1102,9 +1117,24 @@ async function fundtransferHistory(req, res, next) {
             ],
           },
         });
+        const sendrslt = rslt.map(async(history)=>{
+            const senderUsername = (await UserAuthentication.findOne({
+                where:{
+                    ...(history.sender_type == "new" && {id:history.sender}),
+                    ...(history.sender_type == "existing" && {nodeId:history.sender})
+                }
+            })).username
+            const receiverUsername = (await UserAuthentication.findOne({
+                where:{
+                    ...(history.receiver_type == "new" && {id:history.receiver}),
+                    ...(history.receiver_type == "existing" && {nodeId:history.receiver})
+                }
+            })).username
+            return {...history.dataValues,senderUsername,receiverUsername}
+          })
         res.status(200).json({
           message: "Funds Sent history Fetched successfully",
-          data: rslt,
+          data: sendrslt,
         });
       } else {
         throw new ApiBadRequestError(
