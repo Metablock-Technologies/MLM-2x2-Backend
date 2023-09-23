@@ -328,7 +328,15 @@ async function getMyteam(req, res, next) {
             id:{
                 [Op.in]:arr
             }
-        }
+        },
+        include: [
+            {
+              model: Income_report,
+            },
+            {
+              model: Wallet,
+            },
+          ],
     })
     res
       .status(200)
@@ -1028,6 +1036,21 @@ async function fundtransferHistory(req, res, next) {
     }
     if (userId == "all") {
       const rslt = await FundTransferHistory.findAll();
+      const sendrslt = rslt.map(async(history)=>{
+        const senderUsername = (await UserAuthentication.findOne({
+            where:{
+                ...(history.sender_type == "new" && {id:history.sender}),
+                ...(history.sender_type == "existing" && {nodeId:history.sender})
+            }
+        })).username
+        const receiverUsername = (await UserAuthentication.findOne({
+            where:{
+                ...(history.receiver_type == "new" && {id:history.receiver}),
+                ...(history.receiver_type == "existing" && {nodeId:history.receiver})
+            }
+        })).username
+        return {...history.dataValues,senderUsername,receiverUsername}
+      })
       res.status(200).json({
         message: "Fund transfer history Fetched successfully",
         data: rslt,
