@@ -270,6 +270,7 @@ async function getUserProfile(req, res, next) {
         sponsorId = refUser.hashcode;
       }
       metadata.sponsorId = sponsorId;
+      metadata.walletaddress = userAuth.walletaddress;
       let arr = await userServices.getMyteam(uid);
       metadata.totalUsers = arr.length;
       metadata.activeUsers = (
@@ -1036,7 +1037,7 @@ async function fundtransferHistory(req, res, next) {
     }
     if (userId == "all") {
       const rslt = await FundTransferHistory.findAll();
-      const sendrslt = rslt.map(async(history)=>{
+      const sendrslt = await Promise.all(rslt.map(async(history)=>{
         const senderUsername = (await UserAuthentication.findOne({
             where:{
                 ...(history.sender_type == "new" && {id:history.sender}),
@@ -1050,10 +1051,11 @@ async function fundtransferHistory(req, res, next) {
             }
         })).username
         return {...history.dataValues,senderUsername,receiverUsername}
-      })
+      }))
+      console.log("sendrslt ",sendrslt);
       res.status(200).json({
         message: "Fund transfer history Fetched successfully",
-        data: sendrslt,
+        data:  sendrslt,
       });
     } else {
       if (!type) {

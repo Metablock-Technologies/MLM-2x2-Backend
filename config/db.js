@@ -1,4 +1,5 @@
 const { Sequelize, DataTypes, Op } = require('sequelize');
+const logger = require('../logger');
 require('dotenv').config();
 
 const sequelize = new Sequelize(
@@ -8,8 +9,8 @@ const sequelize = new Sequelize(
     host: process.env.DATABASE_HOST,
     port: process.env.DATABASE_PORT,
     dialect: 'mysql',
-    logging:false
-    // logging: (msg) => logger.debug(msg),
+    // logging:false
+    logging: (msg) => logger.debug(msg),
     // dialectOptions: {
     //   ssl: "Amazon RDS",
     // },
