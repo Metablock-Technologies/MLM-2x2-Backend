@@ -675,8 +675,8 @@ async function activateAcc(req, res, next) {
         payeeuser.isPaymentDone = true;
         payeeuser.nodeId = rslt.newUser.id;
         await payeeuser.save();
-        const wallet = await WalletServices.createWallet(rslt.newUser.id);
-        console.log("rslt.newUser.id ", rslt.newUser.id);
+        const wallet = await WalletServices.createWallet(payeeuser.nodeId);
+        console.log("rslt.newUser.id ", payeeuser.nodeId);
         const referralAmount = 0.36 * AMOUNT;
         await walletServices.addAmountToWallet(
           referredByUser.id,
@@ -687,20 +687,20 @@ async function activateAcc(req, res, next) {
           userId: referredByUser.id,
         });
         await walletServices.addAmountToWallet(
-          rslt.newUser.id,
+            payeeuser.nodeId,
           tempWallet.balance
         );
 
         //STEP 4------>> Add levelincome
         const levelincomeAmount = AMOUNT;
         await walletServices.addLevelOrderIncome(
-          rslt.newUser.id,
+            payeeuser.nodeId,
           levelincomeAmount
         );
         //STEP 5------>> Add 4% to autopool 1
         const autoPool1Amount = 0.04 * AMOUNT;
         await walletServices.addAmountToAutoPool1(autoPool1Amount);
-        return res.status(201).json({ success: true, data: rslt });
+        // return res.status(201).json({ success: true, data: rslt });
         // await TempWallet.destroy({
         //   where:{
 
