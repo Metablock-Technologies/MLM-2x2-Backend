@@ -1085,7 +1085,7 @@ async function fundtransferHistory(req, res, next) {
             ],
           },
         });
-        const sendrslt = rslt.map(async(history)=>{
+        const sendrslt = await Promise.all(rslt.map(async(history)=>{
             const senderUsername = (await UserAuthentication.findOne({
                 where:{
                     ...(history.sender_type == "new" && {id:history.sender}),
@@ -1099,7 +1099,7 @@ async function fundtransferHistory(req, res, next) {
                 }
             })).username
             return {...history.dataValues,senderUsername,receiverUsername}
-          })
+          }))
         res.status(200).json({
           message: "Funds Received history Fetched successfully",
           data: sendrslt,
@@ -1119,7 +1119,7 @@ async function fundtransferHistory(req, res, next) {
             ],
           },
         });
-        const sendrslt = rslt.map(async(history)=>{
+        const sendrslt = await Promise.all(rslt.map(async(history)=>{
             const senderUsername = (await UserAuthentication.findOne({
                 where:{
                     ...(history.sender_type == "new" && {id:history.sender}),
@@ -1133,7 +1133,7 @@ async function fundtransferHistory(req, res, next) {
                 }
             })).username
             return {...history.dataValues,senderUsername,receiverUsername}
-          })
+          }))
         res.status(200).json({
           message: "Funds Sent history Fetched successfully",
           data: sendrslt,
