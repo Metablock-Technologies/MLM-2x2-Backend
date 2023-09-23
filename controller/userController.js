@@ -723,7 +723,7 @@ async function activateAcc(req, res, next) {
         //   }
         // })
 
-        res.status(200).json({ message: "Created referral user",token: await this.getAccessToken({ uid: payeeuser.nodeId, role: "basic", created: true }), });
+        res.status(200).json({ message: "Created referral user",activated:true,token: await this.getAccessToken({ uid: payeeuser.nodeId, role: "basic", created: true }), });
       }
     } else {
       const id = req.user.uid;
@@ -764,7 +764,7 @@ async function activateAcc(req, res, next) {
       await walletServices.addAmountToAutoPool2(autoPool2Amount);
       return res
         .status(201)
-        .json({ message: "Renewal User created successfully", user: rslt });
+        .json({ message: "Renewal User created successfully",activated:false, user: rslt });
     }
   } catch (err) {
     next(err);
