@@ -7,6 +7,8 @@ const {
   MoneyRequest,
   UserAuthentication,
   TempWallet,
+  Autopool1,
+  Autopool2,
 } = require("../models");
 const asyncHandler = require("express-async-handler");
 const { Api404Error, ApiBadRequestError } = require("../errors");
@@ -263,3 +265,10 @@ exports.actionMoneyRequest = asyncHandler(async (req, res) => {
   await request.save()
   res.status(200).json({message:"action successfull",data:request})
 });
+
+exports.getAutopool = asyncHandler( async(req,res)=>{
+  res.status(200).json({
+    autopool1:await Autopool1.findAll(),
+    autopool2:await Autopool2.findAll()
+  })
+})

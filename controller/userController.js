@@ -323,9 +323,16 @@ async function getMyteam(req, res, next) {
     let arr = await userServices.getMyteam(uid);
 
     console.log("arr", arr);
+    const users = await User.findAll({
+        where:{
+            id:{
+                [Op.in]:arr
+            }
+        }
+    })
     res
       .status(200)
-      .json({ message: "List of team users fetched successfully", data: arr });
+      .json({ message: "List of team users fetched successfully", data: arr, users });
   } catch (err) {
     next(err);
   }
@@ -707,7 +714,7 @@ async function activateAcc(req, res, next) {
         //   }
         // })
 
-        res.status(200).json({ message: "Created referral user" });
+        res.status(200).json({ message: "Created referral user",token: await this.getAccessToken({ uid: payeeuser.nodeId, role: "basic", created: true }), });
       }
     } else {
       const id = req.user.uid;
