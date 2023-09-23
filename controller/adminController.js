@@ -267,8 +267,10 @@ exports.actionMoneyRequest = asyncHandler(async (req, res) => {
 });
 
 exports.getAutopool = asyncHandler( async(req,res)=>{
-  res.status(200).json({
+  res.status(200).json({data:{
+
     autopool1:await Autopool1.findAll(),
     autopool2:await Autopool2.findAll()
+  }
   })
 })
