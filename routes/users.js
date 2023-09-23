@@ -35,7 +35,7 @@ userRouter.put("/profile",isVerifiedUser,userController.updateName)
 userRouter.get("/myrenew/:userId",isVerifiedUser,userController.getMyRenew)
 userRouter.get("/myrenew",isVerifiedUser,userController.getMyRenew)
 userRouter.post("/changepassword",isVerifiedUser,userAuthController.changepassword)
-userRouter.post("/initialpayment",isVerifiedUser,userController.initialpayment)
+// userRouter.post("/initialpayment",isVerifiedUser,userController.initialpayment)
 userRouter.post("/block",isVerifiedUser,verifyRole("admin"),userAuthController.blockUser)
 userRouter.get("/moneyrequest",isVerifiedUser,userController.getMoneyRequest)
 module.exports = userRouter;

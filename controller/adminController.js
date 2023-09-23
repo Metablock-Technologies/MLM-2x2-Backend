@@ -124,6 +124,7 @@ exports.actionMoneyRequest = asyncHandler(async (req, res) => {
     throw new Api404Error("MoneyRequest not found.");
   }
   if (type == "add") {
+    console.log("NOTHERE PLESEEEEEEEEEEEEEEE");
     if (status == "accepted") {
       const user = await UserAuthentication.findOne({
         where: {
@@ -173,7 +174,9 @@ exports.actionMoneyRequest = asyncHandler(async (req, res) => {
         request.status = status
     }
   }else{
-    if (status == "accepted") {
+    console.log("BOOM");
+    if (status == "rejected") {
+      request.status = status
       const user = await UserAuthentication.findOne({
         where: {
           ...(account_type == "new" && { id: user_id }),
@@ -195,7 +198,7 @@ exports.actionMoneyRequest = asyncHandler(async (req, res) => {
           },
         });
         console.log("temp wallet balance and amount:  ",parseInt(tempWallet.balance));
-        tempWallet.balance = parseInt(tempWallet.balance) - parseInt(amount);
+        tempWallet.balance = parseInt(tempWallet.balance) + parseInt(amount);
         await tempWallet.save();
         // await Transaction.create({
         //     userId:user_id,
@@ -215,23 +218,44 @@ exports.actionMoneyRequest = asyncHandler(async (req, res) => {
           }
         })
 
-        wallet.withdraw_amount =
-        parseFloat(wallet.withdraw_amount) + parseFloat(amount);
-      wallet.balance = parseFloat(wallet.balance) - parseFloat(amount);
+        // wallet.withdraw_amount =
+        // parseFloat(wallet.withdraw_amount) + parseFloat(amount);
+      wallet.balance = parseFloat(wallet.balance) + parseFloat(amount);
       //TODO add send USDTBSC via API
       await wallet.save();
        
         // await walletServices.addAmountToWallet(user.nodeId,amount)
-        await Transaction.create({
-            userId:user.nodeId,
-            detail:"Withdraw",
-            amount:amount
-          })
+        // await Transaction.create({
+        //     userId:user.nodeId,
+        //     detail:"Withdraw",
+        //     amount:amount
+        //   })
         // await walletServices.updateIncomeReport()
       }
-      request.status = "accepted"
+      request.status = "rejected"
     }
     else{
+      const user = await UserAuthentication.findOne({
+        where: {
+          ...(account_type == "new" && { id: user_id }),
+          ...(account_type == "existing" && { nodeId: user_id }),
+        },
+      });
+      if(!user){
+        throw new Api404Error("user not found")
+      }
+      if(user.nodeId){
+        console.log("here existing")
+        account_type = "existing"
+        user_id = user.nodeId
+      }
+      if (account_type == "existing") {
+        await Transaction.create({
+          userId:user.nodeId,
+          detail:"Withdraw",
+          amount:amount
+        })
+      }
         request.status = status
     }
   }
