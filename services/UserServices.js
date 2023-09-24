@@ -5,6 +5,7 @@ const {
     Renewal,
     Income_report,
     UserAuth,
+    UserAuthentication,
 } = require("../models/index");
 const crypto = require("crypto");
 const { AMOUNT, REF } = require("../Constants");
@@ -265,6 +266,15 @@ class UserServices {
             );
         }
         const existingUser = await User.findOne({ where: { id } });
+
+
+        // const authuser = await UserAuthentication.findOne({
+        //     where: {
+        //         nodeId: id
+        //     }
+        // });
+
+
         if (!existingUser) {
             throw new ApiBadRequestError("User With id " + id + " does not exist");
         }
@@ -291,6 +301,7 @@ class UserServices {
             "renew" + "_" + node_id + "_" + id + "_" + existingUser.name;
         let newEmail =
             "renew" + "+" + node_id + "+" + id + "+" + existingUser.email;
+        // let newwalletaddress = authuser.walletaddress
         console.log(newUsername, newEmail);
 
         const newUser = await User.create({
@@ -305,7 +316,6 @@ class UserServices {
             type: "renewed",
             role: "basic"
         });
-
         await Renewal.create({
             renewal_id: newUser.id,
             main_id: existingUser.id,
@@ -332,7 +342,7 @@ class UserServices {
             levelincome: 0.0,
             amount_spent: AMOUNT,
         });
-
+        // const destructUser = { ...newUser, walletaddress: newwalletaddress }
         return { newUser: newUser, income_report: user_income_report };
     }
     async getMyteam(uid) {
