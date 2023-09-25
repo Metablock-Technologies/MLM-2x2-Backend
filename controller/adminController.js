@@ -16,38 +16,38 @@ const { walletServices } = require("../services");
 const { json } = require("body-parser");
 exports.getDashboard = asyncHandler(async (req, res) => {
     const data = {};
-    data.totalMembers = (await User.findAndCountAll().count) || 0;
+    data.totalMembers = ((await User.findAndCountAll()).count) || 0;
     data.activeMembers =
-        (await User.findAndCountAll({
+        ((await User.findAndCountAll({
             where: {
                 status: "active",
             },
-        }).count) || 0;
+        })).count) || 0;
     data.inactiveMembers =
         parseInt(data.totalMembers) - parseInt(data.activeMembers);
     data.blockedMembers =
-        (await User.findAndCountAll({
+        ((await User.findAndCountAll({
             where: {
                 status: "blocked",
             },
-        }).count) || 0;
+        })).count) || 0;
 
-    data.withdrawRequests = await Transaction.findAndCountAll({
-        where: {
-            detail: {
-                [Op.or]: [
-                    {
-                        [Op.like]: "%withdraw%",
-                    },
-                ],
-            },
-        },
-    });
+    // data.withdrawRequests = await Transaction.findAndCountAll({
+    //     where: {
+    //         detail: {
+    //             [Op.or]: [
+    //                 {
+    //                     [Op.like]: "%withdraw%",
+    //                 },
+    //             ],
+    //         },
+    //     },
+    // });
     data.withdrawRequests =
         (
-            await Transaction.findAndCountAll({
+            (await MoneyRequest.findAndCountAll({
                 where: {
-                    detail: {
+                    type: {
                         [Op.or]: [
                             {
                                 [Op.like]: "%withdraw%",
@@ -56,7 +56,7 @@ exports.getDashboard = asyncHandler(async (req, res) => {
                     },
                 },
             })
-        ).count || 0;
+        )).count || 0;
     data.withdrawAmount =
         (await Wallet.sum("withdraw_amount", {
             where: {

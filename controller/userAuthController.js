@@ -80,7 +80,7 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
         );
         console.log("rslt", rslt);
         if (!rslt[0]) {
-            res.status(403).json({ status: 200, message: "Invalid OTP" });
+            res.status(403).json({ status: 403, message: "Invalid OTP" });
         } else {
             let tokenpayload
             if (rslt[1].isPaymentDone) {
@@ -133,16 +133,28 @@ exports.verifyForgetOTP = asyncHandler(async (req, res) => {
         req.body.OTP,
         req.body.role
     );
-    console.log(rslt);
-    const tokenpayload = { uid: rslt.id, role: rslt.role };
-    const token = await userAuthServices.getAccessToken(tokenpayload);
-    res
-        .status(200)
-        .json({
-            status: 200,
-            message: "OTP verified successfully",
-            data: { accessToken: token, user: rslt },
-        });
+    console.log("rslt", rslt);
+        if (!rslt[0]) {
+            res.status(403).json({ status: 403, message: "Invalid OTP" });
+        } else {
+            let tokenpayload
+            if (rslt[1].isPaymentDone) {
+
+                tokenpayload = { uid: rslt[1].nodeId, role: rslt[1].role, created: true };
+            }
+            else {
+
+                tokenpayload = { uid: rslt[1].id, role: rslt[1].role, created: false };
+            }
+            const token = await userAuthServices.getAccessToken(tokenpayload);
+            res
+                .status(200)
+                .json({
+                    status: 200,
+                    message: "OTP verified successfully",
+                    data: { accessToken: token, user: rslt[1] },
+                });
+        }
 });
 
 exports.login = asyncHandler(async (req, res) => {

@@ -734,16 +734,22 @@ async function activateAcc(req, res, next) {
                     payeeuser.nodeId,
                     tempWallet.balance
                 );
-
+                
                 //STEP 4------>> Add levelincome
                 const levelincomeAmount = AMOUNT;
                 await walletServices.addLevelOrderIncome(
                     payeeuser.nodeId,
                     levelincomeAmount
-                );
-                //STEP 5------>> Add 4% to autopool 1
-                const autoPool1Amount = 0.04 * AMOUNT;
-                await walletServices.addAmountToAutoPool1(autoPool1Amount);
+                    );
+                    //STEP 5------>> Add 4% to autopool 1
+                    const autoPool1Amount = 0.04 * AMOUNT;
+                    await walletServices.addAmountToAutoPool1(autoPool1Amount);
+                    await Transaction.create({
+                        detail:"Autopool1 New User",
+                        amount:autoPool1Amount,
+                        userId:payeeuser.nodeId
+    
+                    })
                 // return res.status(201).json({ success: true, data: rslt });
                 // await TempWallet.destroy({
                 //   where:{
@@ -758,9 +764,6 @@ async function activateAcc(req, res, next) {
             }
             //refreed by or root, not root then use referral table to access referral_id to the refrral name
             //STEP 1------>> Create user and income report
-            const rslt = await UserServices.createRenewal(id);
-
-            //STEP 2------>> Add levelincome
             const wallet = await Wallet.findOne({
                 where: {
                     userId: id,
@@ -777,17 +780,37 @@ async function activateAcc(req, res, next) {
                 wallet.balance = parseFloat(wallet.balance) - parseFloat(AMOUNT);
                 await wallet.save();
             }
+            const rslt = await UserServices.createRenewal(id);
+
+            //STEP 2------>> Add levelincome
             const levelincomeAmount = AMOUNT;
             await walletServices.addLevelOrderIncome(
                 rslt.newUser.id,
                 levelincomeAmount
             );
+            await Transaction.create({
+                detail:"Renew User",
+                amount: -1*AMOUNT,
+                userId:rslt.newUser.id,
+
+            })
             //STEP 3------>> Add 4% to autopool 1 and 36% to autopool 2
             const autoPool1Amount = 0.04 * AMOUNT;
             await walletServices.addAmountToAutoPool1(autoPool1Amount);
+            await Transaction.create({
+                detail:"Autopool1 Renew User",
+                amount:autoPool1Amount,
+                userId:rslt.newUser.id,
+
+            })
 
             const autoPool2Amount = 0.36 * AMOUNT;
             await walletServices.addAmountToAutoPool2(autoPool2Amount);
+            await Transaction.create({
+                detail:"Autopool2 Renew User",
+                amount:autoPool2Amount,
+                userId:rslt.newUser.id
+            })
             return res
                 .status(201)
                 .json({ message: "Renewal User created successfully", activated: false, user: rslt });

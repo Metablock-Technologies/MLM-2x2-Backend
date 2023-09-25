@@ -95,9 +95,9 @@ class UserServices {
             amount_spent: AMOUNT,
         });
         await Transaction.create({
-            userId: uid,
-            detail: "Referral Income",
-            amount: AMOUNT
+            userId: newUser.id,
+            detail: "New User",
+            amount: -1*AMOUNT
         })
 
         await Referral.create({
