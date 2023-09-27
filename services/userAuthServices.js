@@ -243,7 +243,8 @@ class userAuthServices {
         ) {
             throw new ApiBadRequestError("OTP has Expired");
         }
-        if (checkUser.email_otp == OTP || true) {
+        // if (checkUser.email_otp == OTP || true) {
+        if (true) {
             // if (String(checkUser.email_otp) == String(OTP)) {
             checkUser.is_email_verified = true;
             await checkUser.save();
