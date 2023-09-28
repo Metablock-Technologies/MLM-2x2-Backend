@@ -70,6 +70,9 @@ exports.getDashboard = asyncHandler(async (req, res) => {
             userId: 1,
         },
     });
+    data.applicationLevelIncome = await Income_report.sum("levelincome")
+    data.applicationReferralIncome = await Income_report.sum("referral")
+    data.applicationTotalIncome = await Income_report.sum("totalincome")
 
     res.status(200).json({
         message: "data fetched successfully",
@@ -86,6 +89,17 @@ exports.getMoneyRequest = asyncHandler(async (req, res) => {
             ["createdAt", "DESC"]
         ]
     });
+
+    const sendAddMoney = await Promise.all(addMoney.map(async(moneyRequest) => {
+        const requestUser = await UserAuthentication.findOne({
+            where:{
+                ...(moneyRequest.account_type == "new" && { id: moneyRequest.user_id }),
+                ...(moneyRequest.account_type == "existing" && { nodeId: moneyRequest.user_id })
+            },
+            attributes:["username"]
+        })
+        return {...moneyRequest.dataValues,...requestUser.dataValues}
+    }))
     const withdrawMoney = await MoneyRequest.findAll({
         where: {
             type: "withdraw",
@@ -94,11 +108,21 @@ exports.getMoneyRequest = asyncHandler(async (req, res) => {
             ["createdAt", "DESC"]
         ]
     });
+    const sendWithdrawMoney = await Promise.all(withdrawMoney.map(async(moneyRequest) => {
+        const requestUser = await UserAuthentication.findOne({
+            where:{
+                ...(moneyRequest.account_type == "new" && { id: moneyRequest.user_id }),
+                ...(moneyRequest.account_type == "existing" && { nodeId: moneyRequest.user_id })
+            },
+            attributes:["username"]
+        })
+        return {...moneyRequest.dataValues,...requestUser.dataValues}
+    }))
     res
         .status(200)
         .json({
             message: "Requests fetched successfully",
-            data: { addMoney, withdrawMoney },
+            data: { addMoney:sendAddMoney, withdrawMoney:sendWithdrawMoney },
         });
 });
 
@@ -269,7 +293,8 @@ exports.actionMoneyRequest = asyncHandler(async (req, res) => {
 exports.getAutopool = asyncHandler(async (req, res) => {
     res.status(200).json({
         data: {
-
+            autopool1Total: await Autopool1.sum("amount"),
+            autopool2Total: await Autopool2.sum("amount"),
             autopool1: await Autopool1.findAll(),
             autopool2: await Autopool2.findAll()
         }

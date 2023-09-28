@@ -244,7 +244,7 @@ async function getUserProfile(req, res, next) {
                 where: {
                     nodeId: uid,
                 },
-                attributes: ["walletaddress"], // Add "walletaddress" to include
+                attributes: ["walletaddress","nodeId"], // Add "walletaddress" to include
             });
             // const renewmainid = await Renewal.findOne({
             //     where:{
@@ -252,9 +252,21 @@ async function getUserProfile(req, res, next) {
             //     },
             //     attributes: ["main_id"], 
             // })
+            let metadata = {};
             if (userAuth) {
-                console.log("heeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+                console.log("OKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKO");
                 user.walletaddress = userAuth.walletaddress;
+                const myrenewIds = (await UserServices.getMyRenew(userAuth.nodeId)).map((renewUser) =>{
+                    return renewUser.renewal_id
+                })
+                console.log("checkkkc ehckk ",myrenewIds);
+                metadata.totalRenewIncome = await Income_report.sum("totalIncome",{
+                    where:{
+                       userId:{
+                        [Op.in]:myrenewIds
+                       } 
+                    }
+                })
                 // console.log(user.walletaddress);
             }
             else {
@@ -278,7 +290,6 @@ async function getUserProfile(req, res, next) {
             }
 
             console.log("ajsdklajfsdkljfaklsdklfajsdl", user);
-            let metadata = {};
             const referraluser = await Referral.findOne({
                 where: {
                     referredUserid: uid,
