@@ -9,6 +9,7 @@ const {
 } = require("../models/index");
 const { AMOUNT } = require("../Constants");
 const { ApiBadRequestError } = require("../errors");
+const { Op } = require("sequelize");
 // const {Wallet} = require('../models');
 class WalletServices {
   async createWallet(userId) {
@@ -158,6 +159,12 @@ class WalletServices {
   async addAmountToAutoPool1(amount) {
     const latestAutopool = await Autopool1.findOne({
       order: [["id", "DESC"]], // Order by ID in descending order
+      where:{
+
+        status:{
+          [Op.ne]:"distributed"
+        } 
+      }
     });
     if (latestAutopool) {
       const monthDate = latestAutopool.month;
@@ -191,16 +198,22 @@ class WalletServices {
   async addAmountToAutoPool2(amount) {
     const latestAutopool = await Autopool2.findOne({
       order: [["id", "DESC"]], // Order by ID in descending order
+      where:{
+
+        status:{
+          [Op.ne]:"distributed"
+        }
+      }
     });
     if (latestAutopool) {
       const monthDate = latestAutopool.month;
       const dateObject = new Date(monthDate); // Convert the monthDate to a JavaScript Date object
-      const latestAutoPoolMonth = dateObject.getMonth();
+      const latestAutoPoolDate = dateObject.getDate();
       const today = new Date();
 
       // Get the zero-indexed month (0 for January, 1 for February, etc.)
-      const currentMonth = today.getMonth();
-      if (currentMonth == latestAutoPoolMonth) {
+      const currentDate = today.getDate();
+      if (currentDate == latestAutoPoolDate) {
         latestAutopool.amount += amount;
         await latestAutopool.save();
         return;
