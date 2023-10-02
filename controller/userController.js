@@ -1209,6 +1209,48 @@ async function fundtransferHistory(req, res, next) {
     }
 }
 
+
+async function eligibleusers (req,res,next){
+    try{
+
+        const eligibleUsersAP1 = await User.findAll({
+            where:{
+                number_of_referral:{
+                    [Op.gte]:100
+                }
+            },
+            include:[
+                {
+                    model:Wallet,
+                    
+                }
+            ]
+        })
+        const eligibleUsersAP2 = await User.findAll({
+            where:{
+                number_of_referral:{
+                    [Op.gte]:10
+                }
+            },
+            include:[
+          {
+            model:Wallet,
+            
+        }
+    ]
+})
+
+res.status(200).json({
+    eligibleUsersAP1,eligibleUsersAP2,
+    status:200,
+    message:"Eligible users fetched successfully."
+})
+}
+catch(err){
+    next(err)
+}
+}
+
 module.exports = {
     getUserTransaction,
     createReferralUser,
@@ -1225,4 +1267,5 @@ module.exports = {
     activateAcc,
     fundtransfer,
     fundtransferHistory,
+    eligibleusers,
 };

@@ -3,7 +3,7 @@ const userRouter = express.Router();
 const userAuthController = require("../controller/userAuthController")
 const userController = require("../controller/userController")
 const { User, Transaction } = require('../models/index');
-const { getUserTransaction, createReferralUser, createRenewal, UserAuthentication } = require('../controller/userController');
+const { getUserTransaction, createReferralUser, createRenewal, UserAuthentication,eligibleusers } = require('../controller/userController');
 const { isVerifiedUser,verifyRole } = require('../middlewares/authMiddleware');
 const paymentController = require("../controller/paymentController");
 const { fileUpload } = require('../config/multerConfig');
@@ -21,7 +21,7 @@ userRouter.post("/withdrawmoneyrequest",isVerifiedUser,userController.withdrawMo
 userRouter.post("/otp",userAuthController.sendOTP)
 userRouter.post("/verify",userAuthController.verifyOTP)
 userRouter.get("/getusername",userAuthController.getUsername)
-
+userRouter.get("/autopool/eligible",eligibleusers)
 userRouter.post("/otpemail",userAuthController.sendForgetOTP) //for forgot password
 userRouter.post("/verifyemail",userAuthController.verifyForgetOTP) // for forgot password
 userRouter.post("/login",userAuthController.login)
