@@ -75,16 +75,16 @@ exports.distribute = asyncHandler( async(req,res)=>{
   console.log("eligibleUsersAP1",eligibleUsersAP1);
   console.log("eligibleUsersAP2",eligibleUsersAP2);
 
-  const amountToDistAP1 = (await Autopool1.sum("amount",{
+  const amountToDistAP1 =( (await Autopool1.sum("amount",{
     where:{
       status:"pending"
     }
-  }))
-  const amountToDistAP2 = (await Autopool2.sum("amount",{
+  }))) || 0
+  const amountToDistAP2 = ((await Autopool2.sum("amount",{
     where:{
       status:"pending"
     }
-  }))
+  }))) || 0
   console.log("amountToDistAP1",amountToDistAP1);
   console.log("amountToDistAP2",amountToDistAP2);
   const peruserAmtAP1 = amountToDistAP1/eligibleUsersAP1.length
@@ -92,7 +92,7 @@ exports.distribute = asyncHandler( async(req,res)=>{
   
   
   //monthly income
-  if(currentDate != 1){
+  if(currentDate == 1){
     console.log("Autopool 1 distributed");
     await Promise.all(
       eligibleUsersAP1.map(async(user)=>{
@@ -117,27 +117,30 @@ exports.distribute = asyncHandler( async(req,res)=>{
     
     
     //daily income
-    const peruserAmtAP2 = amountToDistAP2/eligibleUsersAP2.length
-  await Promise.all(
-    eligibleUsersAP2.map(async(user)=>{
-      console.log("inside userrrr",user.dataValues.id);
-      await walletServices.addAmountToWallet(user.dataValues.id,peruserAmtAP2)
-      await walletServices.updateIncomeReport({userId:user.dataValues.id,autopool2:peruserAmtAP2})
-    })
-  )
-  await Promise.all((await Autopool2.findAll({
-    where:{
-      status:"pending"
-    }
-  })).map(async(autopool2s)=>{
-    autopool2s.status = "distributed";
-    await autopool2s.save()
-  }))
+    if(amountToDistAP2 != 0){
+
+      const peruserAmtAP2 = amountToDistAP2/eligibleUsersAP2.length
+      await Promise.all(
+        eligibleUsersAP2.map(async(user)=>{
+          console.log("inside userrrr",user.dataValues.id);
+          await walletServices.addAmountToWallet(user.dataValues.id,peruserAmtAP2)
+          await walletServices.updateIncomeReport({userId:user.dataValues.id,autopool2:peruserAmtAP2})
+        })
+        )
+        await Promise.all((await Autopool2.findAll({
+          where:{
+            status:"pending"
+          }
+        })).map(async(autopool2s)=>{
+          autopool2s.status = "distributed";
+          await autopool2s.save()
+        }))
+      }
 
 
   
   sendEmail("okdreamok25@gmail.com","Daily and Monthly Income Update",`Following amount has been distributed.<br>DailyIncome: ${amountToDistAP1}<br> Monthly Income: ${currentDate==1?amountToDistAP1:0}.`)
 
-  // res.send(`Following amount has been distributed.<br>DailyIncome: ${amountToDistAP2}<br> Monthly Income: ${currentDate==1?amountToDistAP1:0}.`)
-  res.status("200").json({message:"ok"})
+  res.send(`Following amount has been distributed.<br>DailyIncome: ${amountToDistAP2}<br> Monthly Income: ${currentDate==1?amountToDistAP1:0}.`)
+  // res.status("200").json({message:"ok"})
 })
