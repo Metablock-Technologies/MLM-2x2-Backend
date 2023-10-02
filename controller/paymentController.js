@@ -136,7 +136,7 @@ exports.distribute = asyncHandler( async(req,res)=>{
 
 
   
-  sendEmail("okdreamok25@gmail.com","Daily and Monthly Income Update",`Following amount has been distributed.<br>DailyIncome: ${0}<br> Monthly Income: ${currentDate==1?amountToDistAP1:0}.`)
+  sendEmail("okdreamok25@gmail.com","Daily and Monthly Income Update",`Following amount has been distributed.<br>DailyIncome: ${amountToDistAP1}<br> Monthly Income: ${currentDate==1?amountToDistAP1:0}.`)
 
   // res.send(`Following amount has been distributed.<br>DailyIncome: ${amountToDistAP2}<br> Monthly Income: ${currentDate==1?amountToDistAP1:0}.`)
   res.status("200").json({message:"ok"})
