@@ -522,30 +522,31 @@ async function withdrawMoney(req, res, next) {
             if (amount < 5) {
                 throw new ApiBadRequestError("Minimum withdraw amount is 5");
             }
-            if (
-                numberOfrenew.count == 0 &&
-                parseFloat(wallet.withdraw_amount) + parseFloat(amount) > 100
-            ) {
-                throw new ApiBadRequestError(
-                    "You can only withdraw upto 100 with 0 renew id."
-                );
-            }
-            if (
-                numberOfrenew.count == 1 &&
-                parseFloat(wallet.withdraw_amount) + parseFloat(amount) > 200
-            ) {
-                throw new ApiBadRequestError(
-                    "You can only withdraw upto 200 with 1 renew id."
-                );
-            }
-            if (
-                numberOfrenew.count == 2 &&
-                parseFloat(wallet.withdraw_amount) + parseFloat(amount) > 400
-            ) {
-                throw new ApiBadRequestError(
-                    "You can only withdraw upto 200 with 1 renew id."
-                );
-            }
+            // if (
+            //     numberOfrenew.count == 0 &&
+            //     parseFloat(wallet.withdraw_amount) + parseFloat(amount) > 100
+            // ) {
+            //     throw new ApiBadRequestError(
+            //         "You can only withdraw upto 100 with 0 renew id."
+            //     );
+            // }
+            // if (
+            //     numberOfrenew.count == 1 &&
+            //     parseFloat(wallet.withdraw_amount) + parseFloat(amount) > 200
+            // ) {
+            //     throw new ApiBadRequestError(
+            //         "You can only withdraw upto 200 with 1 renew id."
+            //     );
+            // }
+            // if (
+            //     numberOfrenew.count == 2 &&
+            //     parseFloat(wallet.withdraw_amount) + parseFloat(amount) > 400
+            // ) {
+            //     throw new ApiBadRequestError(
+            //         "You can only withdraw upto 200 with 1 renew id."
+            //     );
+            // }
+            
             // wallet.withdraw_amount =
             //   parseFloat(wallet.withdraw_amount) + parseFloat(amount);
             // wallet.balance = parseFloat(wallet.balance) - parseFloat(amount);
