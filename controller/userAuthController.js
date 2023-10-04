@@ -2,6 +2,8 @@ const asyncHandler = require("express-async-handler");
 const userAuthServices = require("../services/userAuthServices");
 const { Api404Error, ApiBadRequestError } = require("../errors");
 const { User, Admin, UserAuthentication } = require("../models");
+const { Sequelize, DataTypes, Op } = require('sequelize');
+
 const bcrypt = require("bcrypt");
 exports.sendOTP = asyncHandler(async (req, res) => {
     if (!req.body.phone) {
@@ -176,13 +178,13 @@ exports.changepassword = asyncHandler(async (req, res) => {
         throw new ApiBadRequestError("pleas provide password in body");
     }
     if (role == "basic") {
+        
         const salt = await bcrypt.genSaltSync(10);
         password = bcrypt.hashSync(password, salt);
         const user = await UserAuthentication.findOne({
-            where: {
-                id: uid,
-            },
+            where:{ [Op.or]: [{nodeId: uid,isPaymentDone:true},{id:uid, isPaymentDone: false}] }
         });
+        console.log("++++++++++++++++++++++>>>>>>>>>>>>",user)
         user.password = password;
         await user.save();
         res
