@@ -11,6 +11,7 @@ exports.sendOTP = asyncHandler(async (req, res) => {
             "There was no phone number provided in the body. Please provide a phone number"
         );
     }
+    console.log("hello")
     if (!req.body.role) {
         throw new ApiBadRequestError(
             "There was no role provided in the body. Please provide a role (basic/admin)"
